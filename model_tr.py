@@ -54,7 +54,7 @@ class AttnDecoderRNN(nn.Module):
         self.ws = nn.Linear(self.hidden_size, 1, bias=False)
         self.wx = nn.Linear(self.hidden_size, 1)
 
-    def forward(self, input, hidden, encoder_outputs, pg_mat2):
+    def forward(self, input, hidden, encoder_outputs, pg_mat):
         embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
@@ -69,12 +69,8 @@ class AttnDecoderRNN(nn.Module):
                                  encoder_outputs.unsqueeze(0))
 
         p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0]) + self.wx(embedded[0]))[0,0]
-        vocab_len = self.output_size + 1
-        pg_mat1 = torch.eye(vocab_len, device=device) * p_gen
-        pg_mat  = torch.cat((pg_mat1, torch.zeros(pg_mat2.size()[1], vocab_len, device=device)), 0)
-        pg_mat2 = pg_mat2 * (torch.eye(1, device=device)[0,0] - p_gen)
-        pg_mat  = torch.cat((pg_mat, pg_mat2), 1)
 
+        atten_p = torch.mm(attn_weights, pg_mat*p_gen)
 
         output = torch.cat((hidden[0], attn_applied[0]), 1)
         output = self.attn_combine(output).unsqueeze(0)
@@ -84,7 +80,7 @@ class AttnDecoderRNN(nn.Module):
 
         output = F.softmax(self.out(output[0]), dim=1)
 
-        output = torch.mm(torch.cat((output, attn_weights),1), pg_mat)
+        output = torch.cat((output, attn_weights),1)
         output = torch.log(output)
 
         return output, hidden, attn_weights

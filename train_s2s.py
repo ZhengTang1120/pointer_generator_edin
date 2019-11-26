@@ -18,17 +18,14 @@ def splitsent(sentence, sentence2):
 def indexesFromSentence(lang, sentence, lang2, sentence2):
     sourceset = {}
     id2source = {}
-    pg_mat = np.zeros((len(sentence.split()) + lang2.n_words + 1, len(sentence.split())))
+    pg_mat = np.zeros((len(sentence.split()) + 1, len(sentence.split()) + 1))
     for i, word in enumerate(sentence.split()):
-        if word in lang2.word2index:
-            pg_mat[lang2.word2index[word]][i] = 1 
-        else:
-            if word not in sourceset:
-                sourceset[word] = lang2.n_words + len(sourceset)
-                id2source[sourceset[word]] = word
-            pg_mat[sourceset[word]][i] = 1
+        if word not in sourceset:
+            sourceset[word] = len(sourceset)
+            id2source[sourceset[word]] = word
+        pg_mat[sourceset[word]][i] = 1
     indexes = [lang.word2index[word] for word in sentence.split()]
-    indexes2 = [lang2.word2index[word] if word in lang2.word2index else sourceset[word] for word in list(splitsent(sentence2, sentence))]
+    indexes2 = [sourceset[word] if word in sourceset else lang2.word2index[word] for word in list(splitsent(sentence2, sentence))]
 
     indexes.append(EOS_token)
     indexes2.append(EOS_token)
