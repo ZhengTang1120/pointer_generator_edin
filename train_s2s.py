@@ -18,14 +18,14 @@ def splitsent(sentence, sentence2):
 def indexesFromSentence(lang, sentence, lang2, sentence2):
     sourceset = {}
     id2source = {}
-    pg_mat = np.zeros((len(sentence.split()) + 1, len(sentence.split()) + 1))
+    pg_mat = np.ones((len(sentence.split()) + 1, len(sentence.split()) + 1)) * 1e-10
     for i, word in enumerate(sentence.split()):
         if word not in sourceset:
             sourceset[word] = len(sourceset)
             id2source[sourceset[word]] = word
         pg_mat[sourceset[word]][i] = 1
     indexes = [lang.word2index[word] for word in sentence.split()]
-    indexes2 = [sourceset[word] if word in sourceset else lang2.word2index[word] for word in list(splitsent(sentence2, sentence))]
+    indexes2 = [lang2.n_words + sourceset[word] if word in sourceset else lang2.word2index[word] for word in list(splitsent(sentence2, sentence))]
 
     indexes.append(EOS_token)
     indexes2.append(EOS_token)
@@ -73,7 +73,6 @@ def train(input_tensor, target_tensor, pg_mat, encoder, decoder, encoder_optimiz
                 decoder_input, decoder_hidden, encoder_outputs, pg_mat)
             topv, topi = decoder_output.topk(1)
             decoder_input = topi.squeeze().detach()  # detach from history as input
-
             loss += criterion(decoder_output, target_tensor[di])
             if decoder_input.item() == EOS_token:
                 break

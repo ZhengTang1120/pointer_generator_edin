@@ -67,10 +67,9 @@ class AttnDecoderRNN(nn.Module):
             , dim=1)
         attn_applied = torch.bmm(attn_weights.unsqueeze(0),
                                  encoder_outputs.unsqueeze(0))
-
         p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0]) + self.wx(embedded[0]))[0,0]
 
-        atten_p = torch.mm(attn_weights, pg_mat*p_gen)
+        atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen))
 
         output = torch.cat((hidden[0], attn_applied[0]), 1)
         output = self.attn_combine(output).unsqueeze(0)
@@ -79,8 +78,8 @@ class AttnDecoderRNN(nn.Module):
         
 
         output = F.softmax(self.out(output[0]), dim=1)
-
-        output = torch.cat((output, attn_weights),1)
+        output = output * p_gen
+        output = torch.cat((output, atten_p),1)
         output = torch.log(output)
 
         return output, hidden, attn_weights
