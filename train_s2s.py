@@ -21,11 +21,11 @@ def indexesFromSentence(lang, sentence, lang2, sentence2):
     pg_mat = np.ones((len(sentence.split()) + 1, len(sentence.split()) + 1)) * 1e-10
     for i, word in enumerate(sentence.split()):
         if word not in sourceset:
-            sourceset[word] = len(sourceset)
+            sourceset[word] = lang2.n_words + len(sourceset)
             id2source[sourceset[word]] = word
-        pg_mat[sourceset[word]][i] = 1
+        pg_mat[sourceset[word]-lang2.n_words][i] = 1
     indexes = [lang.word2index[word] for word in sentence.split()]
-    indexes2 = [lang2.n_words + sourceset[word] if word in sourceset else lang2.word2index[word] for word in list(splitsent(sentence2, sentence))]
+    indexes2 = [sourceset[word] if word in sourceset else lang2.word2index[word] for word in list(splitsent(sentence2, sentence))]
 
     indexes.append(EOS_token)
     indexes2.append(EOS_token)
