@@ -63,6 +63,7 @@ def train(input_tensor, target_tensor, pg_mat, encoder, decoder, encoder_optimiz
         for di in range(target_length):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs, pg_mat)
+            print (decoder_output)
             loss += criterion(decoder_output, target_tensor[di])
             decoder_input = target_tensor[di]  # Teacher forcing
 
@@ -71,6 +72,7 @@ def train(input_tensor, target_tensor, pg_mat, encoder, decoder, encoder_optimiz
         for di in range(target_length):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs, pg_mat)
+            print (decoder_output)
             topv, topi = decoder_output.topk(1)
             decoder_input = topi.squeeze().detach()  # detach from history as input
             loss += criterion(decoder_output, target_tensor[di])

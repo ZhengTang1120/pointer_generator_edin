@@ -80,7 +80,10 @@ class AttnDecoderRNN(nn.Module):
         output = F.softmax(self.out(output[0]), dim=1)
         output = output * p_gen
         output = torch.cat((output, atten_p),1)
+        print ("-----------------------------")
+        print (output)
         output = torch.log(output)
+        print (output)
 
         return output, hidden, attn_weights
 
