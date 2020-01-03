@@ -26,9 +26,9 @@ def tensorFromIndexes(indexes):
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
 def makeIndexes(lang, seq):
-    for word in seq:
-        if word not in lang.word2index:
-            print (word)
+    # for word in seq:
+    #     if word not in lang.word2index:
+    #         print (word)
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
     indexes.append(EOS_token)
     return indexes
@@ -70,10 +70,10 @@ def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classi
 
     loss = criterion(classify_outputs, triggers_tensor)
 
-    for rule_tensor, pg_mat, id2source, triggers_pos in rule_infos:
+    for rule_tensor, pg_mat, id2source, trigger_pos in rule_infos:
         rule_length    = rule_tensor.size(0)
         decoder_input  = torch.tensor([[SOS_token]], device=device)
-        trigger_vec    = encoder_outputs[triggers_pos]
+        trigger_vec    = encoder_outputs[trigger_pos]
         decoder_hidden = encoder_hidden
 
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
@@ -112,22 +112,17 @@ def evaluate(encoder, decoder, datapoint, input_lang, pl1, char, rule_lang):
     entity_pos   = datapoint[2]
     triggers_pos = datapoint[3]
     triggers_lbl = datapoint[4]
-    trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
+    # trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
     pos_list     = datapoint[5]
     chars        = [[char.word2index[c] if c in char.word2index else 0 for c in w] for w in datapoint[0]+["EOS"]]
     rules        = datapoint[6]
 
+
+    pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+
+
     with torch.no_grad():
         input_tensor   = tensorFromIndexes(input)
-        trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
-        rule_infos    = list()
-        if (len(triggers_pos)!=len(rules)):
-            print(triggers_pos, rules)
-        for i, rule in enumerate(rules):
-            rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, datapoint[0])
-            rule_tensor                 = tensorFromIndexes(rule_ids)
-            rule_infos.append((rule_tensor, torch.tensor(pg_mat, dtype=torch.float, device=device), id2source, triggers_pos[i]))
-
         encoder_hidden = encoder.initHidden()
         input_length = input_tensor.size(0)
 
@@ -139,32 +134,36 @@ def evaluate(encoder, decoder, datapoint, input_lang, pl1, char, rule_lang):
         classify_outputs = classifier(encoder_outputs, entity_vec)
 
         _, predicted = torch.max(classify_outputs, 1)
+        decoded_rules = list()
+        pred_triggers = list()
+        for i, p in enumerate(predicted):
+            if p!= 0:
+                pred_triggers.append(i)
 
+                decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
+                trigger_vec    = encoder_outputs[i]
+                decoder_hidden = encoder_hidden
 
-        decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
+                decoded_rule = []
+                for di in range(50):
+                    decoder_output, decoder_hidden, decoder_attention = decoder(
+                            decoder_input, decoder_hidden, encoder_outputs, trigger_vec, pg_mat)
+                    topv, topi = decoder_output.data.topk(1)
+                    if topi.item() == EOS_token:
+                        decoded_rule.append('<EOS>')
+                        break
+                    else:
+                        if topi.item() in output_lang.index2word:
+                            decoded_rule.append(output_lang.index2word[topi.item()])
+                        # elif topi.item() in id2source:
+                        #     decoded_words.append(id2source[topi.item()])
+                        else:
+                            decoded_rule.append('UNK')
 
-        decoder_hidden = encoder_hidden
-
-        decoded_words = []
-        for di in range(50):
-            decoder_output, decoder_hidden, decoder_attention = decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, trigger_vec, pg_mat)
-            topv, topi = decoder_output.data.topk(1)
-            if topi.item() == EOS_token:
-                decoded_words.append('<EOS>')
-                break
-            else:
-                if topi.item() in output_lang.index2word:
-                    decoded_words.append(output_lang.index2word[topi.item()])
-                # elif topi.item() in id2source:
-                #     decoded_words.append(id2source[topi.item()])
-                else:
-                    decoded_words.append('UNK')
-
-            decoder_input = topi.squeeze().detach()
-
-        print (predicted, decoded_words)
-        print (trigger_ids, rules)
+                    decoder_input = topi.squeeze().detach()
+                decoded_rules.append(decoded_rule)
+        print (predicted, decoded_rules)
+        print (triggers_pos, rules)
 
 if __name__ == '__main__':
 
