@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import time
 import math
+import os
 
 
 def asMinutes(s):
@@ -218,7 +219,7 @@ if __name__ == '__main__':
     classifier_optimizer = optim.SGD(classifier.parameters(), lr=learning_rate)
     decoder_optimizer    = optim.SGD(decoder.parameters(), lr=learning_rate)
     criterion = nn.NLLLoss()
-    for _ in range(20):
+    for epoch in range(20):
         print_loss_total = 0
 
         start = time.time()
@@ -239,6 +240,10 @@ if __name__ == '__main__':
         print_loss_total = 0
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
-
+        os.mkdir("model/%d"%epoch)
+        PATH = "model/%d"%epoch
+        torch.save(encoder, PATH+"/encoder")
+        torch.save(decoder, PATH+"/decoder")
+        torch.save(classifier, PATH+"/classifier")
         for datapoint in raw_test:
             evaluate(encoder, decoder, datapoint, input_lang, pl1, char, rule_lang)
