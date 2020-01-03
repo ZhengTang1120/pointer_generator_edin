@@ -153,8 +153,8 @@ def evaluate(encoder, decoder, datapoint, input_lang, pl1, char, rule_lang):
                         decoded_rule.append('<EOS>')
                         break
                     else:
-                        if topi.item() in output_lang.index2word:
-                            decoded_rule.append(output_lang.index2word[topi.item()])
+                        if topi.item() in rule_lang.index2word:
+                            decoded_rule.append(rule_lang.index2word[topi.item()])
                         # elif topi.item() in id2source:
                         #     decoded_words.append(id2source[topi.item()])
                         else:
