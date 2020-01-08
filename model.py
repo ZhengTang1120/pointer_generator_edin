@@ -7,21 +7,33 @@ from language import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderRNN(nn.Module):
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, input_size, hidden_size, input_size2, hidden_size2, input_size3, hidden_size3):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
+        self.hidden_size2 = hidden_size2
+        self.hidden_size3 = hidden_size3
 
         self.embedding = nn.Embedding(input_size, hidden_size)
-        self.gru = nn.GRU(hidden_size, hidden_size)
+        self.embedding_char = nn.Embedding(input_size2, hidden_size2)
+        self.embedding_pos = nn.Embedding(input_size3, hidden_size3)
+        self.gru = nn.GRU(hidden_size+hidden_size2+hidden_size3, hidden_size)
+        self.gru_char = nn.GRU(hidden_size2, hidden_size2)
 
-    def forward(self, input, hidden):
+    def forward(self, input, chars, pos):
         embedded = self.embedding(input).view(-1, 1, self.hidden_size)
-        output = embedded
-        output, hidden = self.gru(output, hidden)
+        embedded_pos = self.embedding_pos(pos).view(-1, 1, self.hidden_size3)
+        encoded_chars = self.encode_chars(chars).view(-1, 1, self.hidden_size2)
+        output = torch.cat((embedded, encoded_chars, embedded_pos), 2)
+        output, hidden = self.gru(output)
         return output, hidden
 
-    def initHidden(self):
-        return torch.zeros(1, 1, self.hidden_size, device=device)
+    def encode_chars(self, chars):
+        outputs = torch.zeros(len(chars), self.hidden_size2, device=device)
+        for i, char in enumerate(chars):
+            embedded_char = self.embedding_char(char).view(-1, 1, self.hidden_size2)
+            output, hidden  = self.gru_char(embedded_char)
+            outputs[i] = hidden[0, 0]
+        return outputs
 
 class Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -33,7 +45,7 @@ class Classifier(nn.Module):
 
     def forward(self, input, entity):
         input  = torch.cat((input, entity.repeat(1, input.size(0)).view(input.size(0), -1)), 1)
-        hidden = self.hidden(input)
+        hidden = torch.tanh(self.hidden(input))
         output = self.softmax(self.out(hidden))
         return output
 
