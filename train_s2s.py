@@ -47,10 +47,24 @@ def train(input_tensor, target_tensor, pg_mat, encoder, decoder, encoder_optimiz
 
     loss = 0
 
+    encoder_outputs = torch.zeros(input_length, encoder.hidden_size, device=device)
+
+    for ei in range(input_length):
+        encoder_output, encoder_hidden = encoder(
+            input_tensor[ei], encoder_hidden)
+        encoder_outputs[ei] = encoder_output[0, 0]
+
+    print (encoder_outputs)
+
+
+    encoder_hidden = encoder.initHidden()
     encoder_output, encoder_hidden = encoder(
             input_tensor, encoder_hidden)
 
     encoder_outputs = encoder_output.view(input_length, -1)
+
+    print (encoder_outputs)
+    exit()
 
     decoder_input = torch.tensor([[SOS_token]], device=device)
 
