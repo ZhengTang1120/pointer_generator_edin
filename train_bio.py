@@ -180,7 +180,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                 pos += len(triggers_pos)
                 for i, p in enumerate(pred_triggers):
                     if p in triggers_pos:
-                        j = trigger_pos.index(p)
+                        j = triggers_pos.index(p)
                         candidates.append(decoded_rules[i])
                         references.append([rules[j]])
                         tp += 1
