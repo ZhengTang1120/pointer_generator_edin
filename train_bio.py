@@ -185,7 +185,14 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                             candidates.append(decoded_rules[i])
                             references.append([rules[j]])
                         tp += 1
-    print (tp/pos, tp/true, 2*tp/(pos + true), corpus_bleu(references, candidates))
+    print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates))
+
+def eval_rules(references, candidates):
+    c = 0.0
+    for i, r in enumerate(candidates):
+        if r == references[i]:
+            c += 1
+    return c/len(candidates), corpus_bleu(references, candidates)
 
 if __name__ == '__main__':
 
