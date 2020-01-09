@@ -178,6 +178,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                 #         exact += 1
                 print (rules)
                 print (decoded_rules)
+                print ("----------")
 
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
