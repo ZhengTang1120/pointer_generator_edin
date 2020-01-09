@@ -7,6 +7,7 @@ import argparse
 import time
 import math
 import os
+from nltk.translate.bleu_score import corpus_bleu
 
 
 def asMinutes(s):
@@ -36,15 +37,15 @@ def makeIndexes(lang, seq):
 def makeOutputIndexes(lang, output, input):
     sourceset = {}
     id2source = {}
-    pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
-    for i, word in enumerate(input):
-        if word not in sourceset:
-            sourceset[word] = lang.n_words + len(sourceset)
-            id2source[sourceset[word]] = word
-        pg_mat[sourceset[word]-lang.n_words][i] = 1
-    indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
+    # pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+    # for i, word in enumerate(input):
+    #     if word not in sourceset:
+    #         sourceset[word] = lang.n_words + len(sourceset)
+    #         id2source[sourceset[word]] = word
+    #     pg_mat[sourceset[word]-lang.n_words][i] = 1
+    # indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
 
-    # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
+    indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
 
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
@@ -109,6 +110,8 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     true = 0.0
     num_rules = 0.0
     exact = 0.0
+    references = []
+    candidates = []
     for datapoint in test:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
@@ -121,9 +124,9 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         rules        = datapoint[6]
 
 
-        rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
-        pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
-        # pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+        # rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
+        # pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
+        pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
 
         with torch.no_grad():
             input_tensor   = tensorFromIndexes(input)
@@ -164,29 +167,24 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                         else:
                             if topi.item() in rule_lang.index2word:
                                 decoded_rule.append(rule_lang.index2word[topi.item()])
-                            elif topi.item() in id2source:
-                                decoded_rule.append(id2source[topi.item()])
+                            # elif topi.item() in id2source:
+                            #     decoded_rule.append(id2source[topi.item()])
                             else:
                                 decoded_rule.append('UNK')
 
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
-            # if triggers_pos[0] != -1 and len(rules[0])!=0:
-                # num_rules += len(rules)
-                # for dr in decoded_rules:
-                #     if dr in rules:
-                #         exact += 1
-                # print (rules)
-                # print (decoded_rules)
-                # print ("----------")
 
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
                 pos += len(triggers_pos)
-                for p in pred_triggers:
+                for i, p in enumerate(pred_triggers):
                     if p in triggers_pos:
+                        j = trigger_pos.index(p)
+                        candidates.append(decoded_rules[i])
+                        references.append([rules[j]])
                         tp += 1
-    print (tp/pos, tp/true, 2*tp/(pos + true))
+    print (tp/pos, tp/true, 2*tp/(pos + true), corpus_bleu(references, candidates))
 
 if __name__ == '__main__':
 
