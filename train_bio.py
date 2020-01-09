@@ -269,8 +269,8 @@ if __name__ == '__main__':
         print_loss_total = 0
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
-        os.mkdir("model_phos/%d"%epoch)
-        PATH = "model_phos/%d"%epoch
+        os.mkdir("model_phospg/%d"%epoch)
+        PATH = "model_phospg/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")
