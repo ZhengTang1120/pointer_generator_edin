@@ -193,8 +193,9 @@ def eval_rules(references, candidates):
         if r == references[i][0]:
             c += 1
         else:
-            print (r)
-            print (references[i][0])
+            print ("cand", r)
+            print ("ref ", references[i][0])
+            print ()
     return c/len(candidates), corpus_bleu(references, candidates)
 
 if __name__ == '__main__':
