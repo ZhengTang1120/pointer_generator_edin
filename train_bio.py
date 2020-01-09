@@ -107,6 +107,8 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     tp = 0.0
     pos = 0.0
     true = 0.0
+    num_rules = 0.0
+    exact = 0.0
     for datapoint in test:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
@@ -157,7 +159,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                                 decoder_input, decoder_hidden, encoder_outputs, trigger_vec, pg_mat)
                         topv, topi = decoder_output.data.topk(1)
                         if topi.item() == EOS_token:
-                            decoded_rule.append('<EOS>')
+                            # decoded_rule.append('<EOS>')
                             break
                         else:
                             if topi.item() in rule_lang.index2word:
@@ -169,17 +171,19 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
 
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
-            if triggers_pos[0] != -1 or len(pred_triggers)!=0:
-                print ("=======================================================")
-                print (pred_triggers, decoded_rules)
-                print (triggers_pos, rules)
+            if triggers_pos[0] != -1 and len(rules[0])!=0:
+                num_rules += len(rules)
+                for dr in decoded_rules:
+                    if dr in rules:
+                        exact += 1
+
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
                 pos += len(triggers_pos)
                 for p in pred_triggers:
                     if p in triggers_pos:
                         tp += 1
-    print (tp/pos, tp/true, 2*tp/(pos + true))
+    print (tp/pos, tp/true, 2*tp/(pos + true), exact/num_rules)
 
 if __name__ == '__main__':
 
