@@ -190,7 +190,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
 def eval_rules(references, candidates):
     c = 0.0
     for i, r in enumerate(candidates):
-        if r == references[i]:
+        if r == references[i][0]:
             c += 1
     return c/len(candidates), corpus_bleu(references, candidates)
 
