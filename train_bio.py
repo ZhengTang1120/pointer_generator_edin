@@ -172,10 +172,12 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
             if triggers_pos[0] != -1 and len(rules[0])!=0:
-                num_rules += len(rules)
-                for dr in decoded_rules:
-                    if dr in rules:
-                        exact += 1
+                # num_rules += len(rules)
+                # for dr in decoded_rules:
+                #     if dr in rules:
+                #         exact += 1
+                print (rules)
+                print (decoded_rules)
 
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
@@ -183,7 +185,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                 for p in pred_triggers:
                     if p in triggers_pos:
                         tp += 1
-    print (tp/pos, tp/true, 2*tp/(pos + true), exact/num_rules)
+    print (tp/pos, tp/true, 2*tp/(pos + true))
 
 if __name__ == '__main__':
 
