@@ -7,13 +7,13 @@ from language import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, input_size2, hidden_size2, input_size3, hidden_size3):
+    def __init__(self, input_size, hidden_size, input_size2, hidden_size2, input_size3, hidden_size3, pretrained):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
         self.hidden_size2 = hidden_size2
         self.hidden_size3 = hidden_size3
 
-        self.embedding = nn.Embedding(input_size, hidden_size)
+        self.embedding = nn.Embedding.from_pretrained(pretrained)
         self.embedding_char = nn.Embedding(input_size2, hidden_size2)
         self.embedding_pos = nn.Embedding(input_size3, hidden_size3)
         self.gru = nn.GRU(hidden_size+hidden_size2+hidden_size3, hidden_size)

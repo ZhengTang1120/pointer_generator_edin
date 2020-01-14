@@ -221,6 +221,8 @@ if __name__ == '__main__':
     input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
     trainning_set = list()
 
+    embeds = load_embeddings("embeddings_november_2016.txt", input_lang)
+
     for datapoint in raw_train:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
@@ -251,7 +253,7 @@ if __name__ == '__main__':
     learning_rate = 0.0001
     hidden_size = 256
 
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, char_lang.n_words, hidden_size, pl1.n_words, hidden_size).to(device)
+    encoder    = EncoderRNN(input_lang.n_words, hidden_size, char_lang.n_words, hidden_size, pl1.n_words, hidden_size, embeds).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
     classifier = Classifier(2 * hidden_size, hidden_size, len(input_lang.labels)).to(device)
 
