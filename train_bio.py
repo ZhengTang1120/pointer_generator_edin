@@ -221,7 +221,7 @@ if __name__ == '__main__':
     input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
     trainning_set = list()
 
-    embeds = load_embeddings("embeddings_november_2016.txt", input_lang)
+    embeds = torch.FloatTensor(load_embeddings("embeddings_november_2016.txt", input_lang))
 
     for datapoint in raw_train:
         input        = makeIndexes(input_lang, datapoint[0])
