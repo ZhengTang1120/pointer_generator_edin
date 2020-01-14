@@ -253,7 +253,7 @@ if __name__ == '__main__':
     learning_rate = 0.0001
     hidden_size = 256
 
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, char_lang.n_words, hidden_size, pl1.n_words, hidden_size, embeds).to(device)
+    encoder    = EncoderRNN(input_lang.n_words, 100, char_lang.n_words, hidden_size, pl1.n_words, hidden_size, embeds).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
     classifier = Classifier(2 * hidden_size, hidden_size, len(input_lang.labels)).to(device)
 
