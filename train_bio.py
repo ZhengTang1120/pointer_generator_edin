@@ -38,14 +38,14 @@ def makeOutputIndexes(lang, output, input):
     sourceset = {}
     id2source = {}
     pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
-    # for i, word in enumerate(input):
-    #     if word not in sourceset:
-    #         sourceset[word] = lang.n_words + len(sourceset)
-    #         id2source[sourceset[word]] = word
-    #     pg_mat[sourceset[word]-lang.n_words][i] = 1
-    # indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
+    for i, word in enumerate(input):
+        if word not in sourceset:
+            sourceset[word] = lang.n_words + len(sourceset)
+            id2source[sourceset[word]] = word
+        pg_mat[sourceset[word]-lang.n_words][i] = 1
+    indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
 
-    indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
+    # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
 
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
@@ -126,9 +126,9 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         rules        = datapoint[6]
 
 
-        # rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
-        # pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
-        pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+        rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
+        pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
+        # pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
 
         with torch.no_grad():
             input_tensor   = tensorFromIndexes(input)
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('datadir')
     parser.add_argument('dev_datadir')
-    parser.add_argument('outdir')
+    parser.add_argument('jfile')
     args = parser.parse_args()
 
     input_lang = Lang("input")
@@ -216,8 +216,11 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     raw_train  = list()
 
-    input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data(args.datadir, input_lang, pl1, char_lang, rule_lang, raw_train)
-    input_lang, pl1, char_lang, rule_lang, raw_train = prepare_data("pubmed2", input_lang, pl1, char_lang, rule_lang, raw_train, "valids2.json")
+    input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, pl1, char_lang, rule_lang, raw_train)
+
+    # input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data(args.datadir, input_lang, pl1, char_lang, rule_lang, raw_train)
+    # input_lang, pl1, char_lang, rule_lang, raw_train = prepare_data("pubmed2", input_lang, pl1, char_lang, rule_lang, raw_train, "valids2.json")
+
     input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
     trainning_set = list()
 
@@ -285,8 +288,8 @@ if __name__ == '__main__':
         print_loss_total = 0
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
-        os.mkdir("model_phos/%d"%epoch)
-        PATH = "model_phos/%d"%epoch
+        os.mkdir("model_phos_new/%d"%epoch)
+        PATH = "model_phos_new/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")

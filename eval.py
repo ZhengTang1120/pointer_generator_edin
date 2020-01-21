@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     epoch = args.epoch
     # for epoch in range(20):
-    PATH = "model_phos/%d"%int(epoch)
+    PATH = "model_phospg/%d"%int(epoch)
     encoder = torch.load(PATH+"/encoder")
     decoder = torch.load(PATH+"/decoder")
     classifier = torch.load(PATH+"/classifier")
