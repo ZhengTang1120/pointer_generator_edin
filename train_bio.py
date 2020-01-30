@@ -189,8 +189,10 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                             candidates.append(decoded_rules[i])
                             references.append([rules[j]])
                         tp += 1
-    print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
-
+    if pos != 0:                    
+        print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
+    else:
+        print (0, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
 def eval_rules(references, candidates):
     c = 0.0
     for i, r in enumerate(candidates):
@@ -288,9 +290,10 @@ if __name__ == '__main__':
         print_loss_total = 0
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
+        evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
         os.mkdir("model_phos_new/%d"%epoch)
         PATH = "model_phos_new/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")
-        evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
+        
