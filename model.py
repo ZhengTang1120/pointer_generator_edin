@@ -4,7 +4,7 @@ from torch import optim
 import torch.nn.functional as F
 from language import *
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, input_size2, hidden_size2, input_size3, hidden_size3, pretrained):
