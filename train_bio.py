@@ -219,7 +219,7 @@ if __name__ == '__main__':
     raw_train  = list()
 
     input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, pl1, char_lang, rule_lang, raw_train)
-
+    raw_train = raw_train[:1000]
     # input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data(args.datadir, input_lang, pl1, char_lang, rule_lang, raw_train)
     # input_lang, pl1, char_lang, rule_lang, raw_train = prepare_data("pubmed2", input_lang, pl1, char_lang, rule_lang, raw_train, "valids2.json")
 
