@@ -57,7 +57,7 @@ class AttnDecoderRNN(nn.Module):
         self.output_size = output_size
         self.dropout_p = dropout_p
 
-        self.embedding = nn.Embedding(self.output_size + 117, self.hidden_size)
+        self.embedding = nn.Embedding(self.output_size + 602, self.hidden_size)
         self.attn = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
@@ -69,10 +69,7 @@ class AttnDecoderRNN(nn.Module):
         self.wx = nn.Linear(self.hidden_size, 1)
 
     def forward(self, input, hidden, encoder_outputs, trigger, pg_mat):
-        try:
-            embedded = self.embedding(input).view(1, 1, -1)
-        except:
-            exit()
+        embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
         output, hidden = self.gru(torch.cat((embedded, trigger.view(1, 1, -1)), 2), hidden)

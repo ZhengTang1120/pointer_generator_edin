@@ -51,7 +51,7 @@ def makeOutputIndexes(lang, output, input):
     return indexes, pg_mat, id2source
 
 def train(input_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
-    encoder_optimizer, classifier_optimizer, decoder_optimizer, criterion):
+    encoder_optimizer, classifier_optimizer, decoder_optimizer, criterion, epoch):
     teacher_forcing_ratio = 0.5
 
     encoder_optimizer.zero_grad()
@@ -117,8 +117,8 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     for datapoint in test:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
-        entity_pos   = datapoint[2]
-        triggers_pos = datapoint[3]
+        entity_pos   = datapoint[2] * 2 + 1
+        triggers_pos = [t * 2 + 1 for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         # trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
         pos_list     = [pl1.word2index[p] if p in pl1.word2index else 1 for p in datapoint[5]]+[0]
@@ -189,10 +189,10 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                             candidates.append(decoded_rules[i])
                             references.append([rules[j]])
                         tp += 1
-    if pos != 0:                    
+    if true != 0:                    
         print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
     else:
-        print (0, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
+        print (tp/pos, 0, 2*tp/(pos + true), "N/A")
 def eval_rules(references, candidates):
     c = 0.0
     for i, r in enumerate(candidates):
@@ -202,14 +202,14 @@ def eval_rules(references, candidates):
             print ("cand", r)
             print ("ref ", references[i][0])
             print ()
+    print (len(candidates))
     return c/len(candidates), corpus_bleu(references, candidates)
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('datadir')
-    parser.add_argument('dev_datadir')
     parser.add_argument('jfile')
+    parser.add_argument('jfile2')
     args = parser.parse_args()
 
     input_lang = Lang("input")
@@ -218,21 +218,23 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     raw_train  = list()
 
+
     input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, pl1, char_lang, rule_lang, raw_train)
-    raw_train = raw_train[:1000]
+    input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data_from_json(args.jfile2)
     # input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data(args.datadir, input_lang, pl1, char_lang, rule_lang, raw_train)
     # input_lang, pl1, char_lang, rule_lang, raw_train = prepare_data("pubmed2", input_lang, pl1, char_lang, rule_lang, raw_train, "valids2.json")
 
-    input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
+    # input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
     trainning_set = list()
 
     embeds = torch.FloatTensor(load_embeddings("embeddings_november_2016.txt", input_lang))
 
+
     for datapoint in raw_train:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
-        entity_pos   = datapoint[2]
-        triggers_pos = datapoint[3]
+        entity_pos   = datapoint[2] * 2 + 1
+        triggers_pos = [t * 2 + 1 for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
         pos_list     = [pl1.word2index[p] for p in datapoint[5]]+[0]
@@ -277,7 +279,8 @@ if __name__ == '__main__':
             loss = train(data[0], data[1], data[2], data[3], data[4], data[5],
                      encoder, classifier, decoder, 
                      encoder_optimizer, classifier_optimizer, 
-                     decoder_optimizer, criterion)
+                     decoder_optimizer, criterion,
+                     epoch)
 
             print_loss_total += loss
 
@@ -291,8 +294,8 @@ if __name__ == '__main__':
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
         evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
-        os.mkdir("model_phos_new/%d"%epoch)
-        PATH = "model_phos_new/%d"%epoch
+        os.mkdir("model_new/%d"%epoch)
+        PATH = "model_new/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")
