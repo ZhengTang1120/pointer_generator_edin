@@ -115,6 +115,9 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     total_decoded = 0.0
     source_decoded = 0.0
     for datapoint in test:
+        print (datapoint[0], datapoint[1])
+        for i, p in enumerate(datapoint[4]):
+            print (p, rules[i])
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
         entity_pos   = datapoint[2] * 2 + 1
@@ -178,7 +181,9 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
 
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
-
+            for i, p in enumerate(pred_triggers):
+                print (p, decoded_rules[i])
+            print ()
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
                 pos += len(triggers_pos)
