@@ -127,7 +127,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
 
         print (datapoint[0], datapoint[1])
         for i, p in enumerate(triggers_pos):
-            print (p, rules[6][i])
+            print (p, rules[i])
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
         pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)

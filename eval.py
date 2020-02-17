@@ -27,6 +27,7 @@ if __name__ == '__main__':
     epoch = args.epoch
     for epoch in range(20):
         PATH = "model_new/%d"%int(epoch)
+        print (PATH)
         encoder = torch.load(PATH+"/encoder")
         decoder = torch.load(PATH+"/decoder")
         classifier = torch.load(PATH+"/classifier")
