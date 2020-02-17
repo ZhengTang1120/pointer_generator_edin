@@ -25,14 +25,14 @@ if __name__ == '__main__':
 
 
     epoch = args.epoch
-    # for epoch in range(20):
-    PATH = "model_phos_new/%d"%int(epoch)
-    encoder = torch.load(PATH+"/encoder")
-    decoder = torch.load(PATH+"/decoder")
-    classifier = torch.load(PATH+"/classifier")
+    for epoch in range(20):
+        PATH = "model_new/%d"%int(epoch)
+        encoder = torch.load(PATH+"/encoder")
+        decoder = torch.load(PATH+"/decoder")
+        classifier = torch.load(PATH+"/classifier")
 
-    encoder.eval()
-    decoder.eval()
-    classifier.eval()
+        encoder.eval()
+        decoder.eval()
+        classifier.eval()
 
-    evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
+        evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
