@@ -117,7 +117,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     for datapoint in test:
         print (datapoint[0], datapoint[1])
         for i, p in enumerate(datapoint[4]):
-            print (p, rules[i])
+            print (p, datapoint[6][i])
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
         entity_pos   = datapoint[2] * 2 + 1
