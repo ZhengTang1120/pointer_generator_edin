@@ -50,7 +50,7 @@ def makeOutputIndexes(lang, output, input):
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
-def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
+def train(input_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
     encoder_optimizer, classifier_optimizer, decoder_optimizer, criterion, epoch):
     teacher_forcing_ratio = 0.5
 
@@ -61,7 +61,7 @@ def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classi
 
     loss = 0
 
-    encoder_output, encoder_hidden = encoder(input_tensor)
+    encoder_output, encoder_hidden = encoder(input_tensor, chars_tensor, pos_tensor)
 
     encoder_outputs  = encoder_output.view(input_length, -1)
     entity_vec       = encoder_outputs[entity_pos]
@@ -124,8 +124,8 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         triggers_pos = [t * 2 + 1 for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         # trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
-        # pos_list     = [pl1.word2index[p] if p in pl1.word2index else 1 for p in datapoint[5]]+[0]
-        # chars        = [[char_lang.word2index[c] if c in char_lang.word2index else 1 for c in w] for w in datapoint[0]+["EOS"]]
+        pos_list     = [pl1.word2index[p] if p in pl1.word2index else 1 for p in datapoint[5]]+[0]
+        chars        = [[char_lang.word2index[c] if c in char_lang.word2index else 1 for c in w] for w in datapoint[0]+["EOS"]]
         rules        = datapoint[6]
 
 
@@ -137,14 +137,14 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
             input_tensor   = tensorFromIndexes(input)
             input_length = input_tensor.size(0)
 
-            # chars_tensor = []
-            # for char in chars:
-            #     char_tensor   = tensorFromIndexes(char)
-            #     chars_tensor.append(char_tensor)
+            chars_tensor = []
+            for char in chars:
+                char_tensor   = tensorFromIndexes(char)
+                chars_tensor.append(char_tensor)
 
-            # pos_tensor = tensorFromIndexes(pos_list)
+            pos_tensor = tensorFromIndexes(pos_list)
 
-            encoder_output, encoder_hidden = encoder(input_tensor)
+            encoder_output, encoder_hidden = encoder(input_tensor, chars_tensor, pos_tensor)
 
             encoder_outputs  = encoder_output.view(input_length, -1)
             entity_vec       = encoder_outputs[entity_pos]
@@ -242,16 +242,16 @@ if __name__ == '__main__':
         triggers_pos = [t * 2 + 1 for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
-        # pos_list     = [pl1.word2index[p] for p in datapoint[5]]+[0]
-        # chars        = [[char_lang.word2index[c] for c in w] for w in datapoint[0]+["EOS"]]
+        pos_list     = [pl1.word2index[p] for p in datapoint[5]]+[0]
+        chars        = [[char_lang.word2index[c] for c in w] for w in datapoint[0]+["EOS"]]
         rules        = datapoint[6]
 
         intput_tensor   = tensorFromIndexes(input)
-        # chars_tensor = []
-        # for char in chars:
-        #     char_tensor   = tensorFromIndexes(char)
-        #     chars_tensor.append(char_tensor)
-        # pos_tensor = tensorFromIndexes(pos_list)
+        chars_tensor = []
+        for char in chars:
+            char_tensor   = tensorFromIndexes(char)
+            chars_tensor.append(char_tensor)
+        pos_tensor = tensorFromIndexes(pos_list)
         triggers_tensor = tensorFromIndexes(trigger_ids).view(-1)
         rule_infos    = list()
         if (len(triggers_pos)!=len(rules)):
@@ -260,12 +260,12 @@ if __name__ == '__main__':
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, datapoint[0])
             rule_tensor                 = tensorFromIndexes(rule_ids)
             rule_infos.append((rule_tensor, torch.tensor(pg_mat, dtype=torch.float, device=device), id2source, triggers_pos[i]))
-        trainning_set.append((intput_tensor, entity_pos, triggers_tensor, rule_infos))
+        trainning_set.append((intput_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, rule_infos))
     
     learning_rate = 0.0001
-    hidden_size = 100
+    hidden_size = 256
 
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
+    encoder    = EncoderRNN(input_lang.n_words, 100, char_lang.n_words, hidden_size, pl1.n_words, hidden_size, embeds).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
     classifier = Classifier(2 * hidden_size, hidden_size, len(input_lang.labels)).to(device)
 
@@ -281,7 +281,7 @@ if __name__ == '__main__':
 
         start = time.time()
         for i, data in enumerate(trainning_set):
-            loss = train(data[0], data[1], data[2], data[3],
+            loss = train(data[0], data[1], data[2], data[3], data[4], data[5],
                      encoder, classifier, decoder, 
                      encoder_optimizer, classifier_optimizer, 
                      decoder_optimizer, criterion,
