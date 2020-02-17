@@ -126,7 +126,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         rules        = datapoint[6]
 
         print (datapoint[0], datapoint[1])
-        for i, p in enumerate(triggers_pos[4]):
+        for i, p in enumerate(triggers_pos):
             print (p, rules[6][i])
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
