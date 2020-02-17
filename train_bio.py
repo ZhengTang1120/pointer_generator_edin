@@ -115,9 +115,6 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     total_decoded = 0.0
     source_decoded = 0.0
     for datapoint in test:
-        print (datapoint[0], datapoint[1])
-        for i, p in enumerate(datapoint[4]):
-            print (p, datapoint[6][i])
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
         entity_pos   = datapoint[2] * 2 + 1
@@ -128,6 +125,9 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         chars        = [[char_lang.word2index[c] if c in char_lang.word2index else 1 for c in w] for w in datapoint[0]+["EOS"]]
         rules        = datapoint[6]
 
+        print (datapoint[0], datapoint[1])
+        for i, p in enumerate(triggers_pos[4]):
+            print (p, rules[6][i])
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
         pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
