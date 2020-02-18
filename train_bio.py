@@ -125,9 +125,6 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
         chars        = [[char_lang.word2index[c] if c in char_lang.word2index else 1 for c in w] for w in datapoint[0]+["EOS"]]
         rules        = datapoint[6]
 
-        print (datapoint[0], datapoint[1])
-        for i, p in enumerate(triggers_pos):
-            print (p, rules[i])
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
         pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
@@ -182,8 +179,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
             for i, p in enumerate(pred_triggers):
-                print (p, decoded_rules[i])
-            print ()
+                print (p, triggers_pos[i])
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
                 pos += len(triggers_pos)
@@ -194,10 +190,10 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
                             candidates.append(decoded_rules[i])
                             references.append([rules[j]])
                         tp += 1
-    if true != 0:                    
-        print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
-    else:
-        print (tp/pos, 0, 2*tp/(pos + true), "N/A")
+    # if true != 0:                    
+    #     print (tp/pos, tp/true, 2*tp/(pos + true), eval_rules(references, candidates), total_decoded, source_decoded)
+    # else:
+    #     print (tp/pos, 0, 2*tp/(pos + true), "N/A")
 def eval_rules(references, candidates):
     c = 0.0
     for i, r in enumerate(candidates):
