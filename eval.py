@@ -1,5 +1,5 @@
 from train_bio import *
-from sklearn.cluster import AffinityPropagation
+from sklearn.cluster import MeanShift
 
 
 if __name__ == '__main__':
@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     X = np.concatenate((dvs, wvs), axis=0)
     print (X)
-    af = AffinityPropagation(preference=-50).fit(X)
-    labels = af.labels_
+    clustering = MeanShift(bandwidth=2).fit(X)
+    labels = clustering.labels_
     print (labels)
 
     # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
