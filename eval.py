@@ -56,15 +56,14 @@ if __name__ == '__main__':
     for i, d in enumerate(deps):
         d_tensor = torch.tensor([deps2id[d]], dtype=torch.long, device=device).view(-1, 1)
         dvs[i] = encoder.embedding(d_tensor).numpy()
-        print (encoder.embedding(d_tensor).numpy())
     for i, w in enumerate(words):
         w_tensor = torch.tensor([word2id[w]], dtype=torch.long, device=device).view(-1, 1)
-        wvs[i] = w_tensor.numpy()
+        wvs[i] = encoder.embedding(w_tensor).numpy()
 
-    # X = np.concatenate((dvs, wvs), axis=0)
-    # print (X)
-    # af = AffinityPropagation(preference=-50).fit(X)
-    # labels = af.labels_
-    # print (labels)
+    X = np.concatenate((dvs, wvs), axis=0)
+    print (X)
+    af = AffinityPropagation(preference=-50).fit(X)
+    labels = af.labels_
+    print (labels)
 
     # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
