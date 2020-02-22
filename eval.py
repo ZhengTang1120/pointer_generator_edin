@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, pl1, char_lang, rule_lang, raw_train)
     input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data_from_json(args.jfile2)
-
+    embeds = load_embeddings("embeddings_november_2016.txt", input_lang)
     deps2id = dict()
     deps = list()
     word2id = dict()
@@ -56,14 +56,20 @@ if __name__ == '__main__':
     for i, d in enumerate(deps):
         d_tensor = torch.tensor([deps2id[d]], dtype=torch.long, device=device).view(-1, 1)
         dvs[i] = encoder.embedding(d_tensor).numpy()
+        print (dvs[i])
+        print (embeds[deps2id[d]])
+        print ()
     for i, w in enumerate(words):
         w_tensor = torch.tensor([word2id[w]], dtype=torch.long, device=device).view(-1, 1)
         wvs[i] = encoder.embedding(w_tensor).numpy()
+        print (wvs[i])
+        print (embeds[word2id[w]])
+        print ()
 
-    X = np.concatenate((dvs, wvs), axis=0)
-    print (X)
-    clustering = MeanShift(bandwidth=2).fit(X)
-    labels = clustering.labels_
-    print (labels)
+    # X = np.concatenate((dvs, wvs), axis=0)
+    # print (X)
+    # clustering = MeanShift(bandwidth=2).fit(X)
+    # labels = clustering.labels_
+    # print (labels)
 
     # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
