@@ -295,8 +295,8 @@ if __name__ == '__main__':
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
         evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
-        os.mkdir("model_new/%d"%epoch)
-        PATH = "model_new/%d"%epoch
+        os.mkdir("model_new2/%d"%epoch)
+        PATH = "model_new2/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")

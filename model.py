@@ -13,7 +13,7 @@ class EncoderRNN(nn.Module):
         self.hidden_size2 = hidden_size2
         self.hidden_size3 = hidden_size3
 
-        self.embedding = nn.Embedding.from_pretrained(pretrained)
+        self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.embedding_char = nn.Embedding(input_size2, hidden_size2)
         self.embedding_pos = nn.Embedding(input_size3, hidden_size3)
         self.gru = nn.GRU(hidden_size+hidden_size2+hidden_size3, hidden_size2)
