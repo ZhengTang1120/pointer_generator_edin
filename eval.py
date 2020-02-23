@@ -72,4 +72,4 @@ if __name__ == '__main__':
         # labels = clustering.labels_
         # print (labels)
 
-        # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
+        evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
