@@ -1,5 +1,5 @@
 from train_bio import *
-from sklearn.cluster import MeanShift
+# from sklearn.cluster import MeanShift
 
 
 if __name__ == '__main__':
@@ -40,36 +40,36 @@ if __name__ == '__main__':
                     word2id[word] = input_lang.word2index[word]
 
     epoch = args.epoch
-    # for epoch in range(20):
+    for epoch in range(20):
     PATH = "model_new2/%d"%int(epoch)
-    print (PATH)
-    encoder = torch.load(PATH+"/encoder")
-    decoder = torch.load(PATH+"/decoder")
-    classifier = torch.load(PATH+"/classifier")
+        print (PATH)
+        encoder = torch.load(PATH+"/encoder")
+        decoder = torch.load(PATH+"/decoder")
+        classifier = torch.load(PATH+"/classifier")
 
-    encoder.eval()
-    decoder.eval()
-    classifier.eval()
+        encoder.eval()
+        decoder.eval()
+        classifier.eval()
 
-    wvs = np.zeros((len(words), 100))
-    dvs = np.zeros((len(deps), 100))
-    for i, d in enumerate(deps):
-        d_tensor = torch.tensor([deps2id[d]], dtype=torch.long, device=device).view(-1, 1)
-        dvs[i] = encoder.embedding(d_tensor).numpy()
-        print (dvs[i])
-        print (embeds[deps2id[d]])
-        print ()
-    for i, w in enumerate(words):
-        w_tensor = torch.tensor([word2id[w]], dtype=torch.long, device=device).view(-1, 1)
-        wvs[i] = encoder.embedding(w_tensor).numpy()
-        print (wvs[i])
-        print (embeds[word2id[w]])
-        print ()
+        # wvs = np.zeros((len(words), 100))
+        # dvs = np.zeros((len(deps), 100))
+        # for i, d in enumerate(deps):
+        #     d_tensor = torch.tensor([deps2id[d]], dtype=torch.long, device=device).view(-1, 1)
+        #     dvs[i] = encoder.embedding(d_tensor).numpy()
+        #     print (dvs[i])
+        #     print (embeds[deps2id[d]])
+        #     print ()
+        # for i, w in enumerate(words):
+        #     w_tensor = torch.tensor([word2id[w]], dtype=torch.long, device=device).view(-1, 1)
+        #     wvs[i] = encoder.embedding(w_tensor).numpy()
+        #     print (wvs[i])
+        #     print (embeds[word2id[w]])
+        #     print ()
 
-    # X = np.concatenate((dvs, wvs), axis=0)
-    # print (X)
-    # clustering = MeanShift(bandwidth=2).fit(X)
-    # labels = clustering.labels_
-    # print (labels)
+        # X = np.concatenate((dvs, wvs), axis=0)
+        # print (X)
+        # clustering = MeanShift(bandwidth=2).fit(X)
+        # labels = clustering.labels_
+        # print (labels)
 
-    # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
+        # evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
