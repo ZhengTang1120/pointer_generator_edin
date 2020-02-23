@@ -55,13 +55,13 @@ if __name__ == '__main__':
     dvs = np.zeros((len(deps), 100))
     for i, d in enumerate(deps):
         d_tensor = torch.tensor([deps2id[d]], dtype=torch.long, device=device).view(-1, 1)
-        dvs[i] = encoder.embedding(d_tensor).numpy()
+        dvs[i] = encoder.embedding(d_tensor).detach().numpy()
         print (dvs[i])
         print (embeds[deps2id[d]])
         print ()
     for i, w in enumerate(words):
         w_tensor = torch.tensor([word2id[w]], dtype=torch.long, device=device).view(-1, 1)
-        wvs[i] = encoder.embedding(w_tensor).numpy()
+        wvs[i] = encoder.embedding(w_tensor).detach().numpy()
         print (wvs[i])
         print (embeds[word2id[w]])
         print ()
