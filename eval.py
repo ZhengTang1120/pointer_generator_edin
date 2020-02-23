@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     epoch = args.epoch
     for epoch in range(20):
-    PATH = "model_new2/%d"%int(epoch)
+        PATH = "model_new2/%d"%int(epoch)
         print (PATH)
         encoder = torch.load(PATH+"/encoder")
         decoder = torch.load(PATH+"/decoder")
