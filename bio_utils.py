@@ -396,23 +396,19 @@ def prepare_test_data(dirname, input_lang=Lang("1"), pos_lang=Lang("2"),
         char_lang.addSentence(w)
     return input_lang, pos_lang, char_lang, rule_lang, raw_test
 
-def prepare_data_from_json(jfile, input_lang=Lang("1"), pos_lang=Lang("2"), 
-    char_lang=Lang("3"), rule_lang=Lang("4"), train=list()):
+def prepare_data_from_json(jfile, input_lang=Lang("1"), rule_lang=Lang("4"), train=list()):
     with open(jfile) as f:
         raw_train = json.load(f)
     
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[0])
-        pos_lang.addSentence(datapoint[5])
-        for rule in datapoint[6]:
+        for rule in datapoint[5]:
             rule_lang.addSentence(rule)
         for tlbl in datapoint[4]:
             if tlbl not in input_lang.labels:
                 input_lang.label2id[tlbl] = len(input_lang.labels)
                 input_lang.labels.append(tlbl)
-    for i, w in input_lang.index2word.items():
-        char_lang.addSentence(w)
-    return input_lang, pos_lang, char_lang, rule_lang, train + raw_train
+    return input_lang, rule_lang, train + raw_train
 
 
 def parse_json_data():

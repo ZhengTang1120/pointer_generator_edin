@@ -50,7 +50,18 @@ def makeOutputIndexes(lang, output, input):
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
-def train(input_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
+def get_pgmat(lang, input):
+    sourceset = {}
+    id2source = {}
+    pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+    for i, word in enumerate(input):
+        if word not in sourceset:
+            sourceset[word] = lang.n_words + len(sourceset)
+            id2source[sourceset[word]] = word
+        pg_mat[sourceset[word]-lang.n_words][i] = 1
+    return pg_mat, id2source
+
+def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
     encoder_optimizer, classifier_optimizer, decoder_optimizer, criterion, epoch):
     teacher_forcing_ratio = 0.5
 
@@ -61,7 +72,7 @@ def train(input_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, r
 
     loss = 0
 
-    encoder_output, encoder_hidden = encoder(input_tensor, chars_tensor, pos_tensor)
+    encoder_output, encoder_hidden = encoder(input_tensor)
 
     encoder_outputs  = encoder_output.view(input_length, -1)
     entity_vec       = encoder_outputs[entity_pos]
@@ -104,7 +115,7 @@ def train(input_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, r
 
     return loss.item()
 
-def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rule_lang):
+def evaluate(encoder, decoder, classifier, test, input_lang, rule_lang):
     tp = 0.0
     pos = 0.0
     true = 0.0
@@ -117,31 +128,20 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
     for datapoint in test:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
-        entity_pos   = datapoint[2] * 2 + 1
-        triggers_pos = [t * 2 + 1 for t in datapoint[3]]
+        entity_pos   = datapoint[2]
+        triggers_pos = [t for t in datapoint[3]]
         triggers_lbl = datapoint[4]
-        # trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
-        pos_list     = [pl1.word2index[p] if p in pl1.word2index else 1 for p in datapoint[5]]+[0]
-        chars        = [[char_lang.word2index[c] if c in char_lang.word2index else 1 for c in w] for w in datapoint[0]+["EOS"]]
-        rules        = datapoint[6]
+        rules        = datapoint[5]
 
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
         pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
-        # pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
 
         with torch.no_grad():
             input_tensor   = tensorFromIndexes(input)
             input_length = input_tensor.size(0)
 
-            chars_tensor = []
-            for char in chars:
-                char_tensor   = tensorFromIndexes(char)
-                chars_tensor.append(char_tensor)
-
-            pos_tensor = tensorFromIndexes(pos_list)
-
-            encoder_output, encoder_hidden = encoder(input_tensor, chars_tensor, pos_tensor)
+            encoder_output, encoder_hidden = encoder(input_tensor)
 
             encoder_outputs  = encoder_output.view(input_length, -1)
             entity_vec       = encoder_outputs[entity_pos]
@@ -178,6 +178,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, pl1, char_lang, rul
 
                         decoder_input = topi.squeeze().detach()
                     decoded_rules.append(decoded_rule)
+
             true += len(pred_triggers)
             if triggers_pos[0] != -1:
                 pos += len(triggers_pos)
@@ -212,18 +213,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     input_lang = Lang("input")
-    pl1        = Lang("position")
-    char_lang       = Lang("char")
     rule_lang  = Lang("rule")
     raw_train  = list()
 
 
-    input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, pl1, char_lang, rule_lang, raw_train)
-    input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data_from_json(args.jfile2)
-    # input_lang, pl1, char_lang, rule_lang, raw_train   = prepare_data(args.datadir, input_lang, pl1, char_lang, rule_lang, raw_train)
-    # input_lang, pl1, char_lang, rule_lang, raw_train = prepare_data("pubmed2", input_lang, pl1, char_lang, rule_lang, raw_train, "valids2.json")
-
-    # input2_lang, pl2, char_lang2, rule_lang2, raw_test = prepare_data(args.dev_datadir, valids="valids.json")
+    input_lang, rule_lang, raw_train   = prepare_data_from_json(args.jfile, input_lang, rule_lang, raw_train)
+    input2_lang, rule_lang2, raw_test = prepare_data_from_json(args.jfile2)
     trainning_set = list()
 
     embeds = torch.FloatTensor(load_embeddings("embeddings_november_2016.txt", input_lang))
@@ -232,20 +227,13 @@ if __name__ == '__main__':
     for datapoint in raw_train:
         input        = makeIndexes(input_lang, datapoint[0])
         entity       = datapoint[1]
-        entity_pos   = datapoint[2] * 2 + 1
-        triggers_pos = [t * 2 + 1 for t in datapoint[3]]
+        entity_pos   = datapoint[2]
+        triggers_pos = [t for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
-        pos_list     = [pl1.word2index[p] for p in datapoint[5]]+[0]
-        chars        = [[char_lang.word2index[c] for c in w] for w in datapoint[0]+["EOS"]]
-        rules        = datapoint[6]
+        rules        = datapoint[5]
 
         intput_tensor   = tensorFromIndexes(input)
-        chars_tensor = []
-        for char in chars:
-            char_tensor   = tensorFromIndexes(char)
-            chars_tensor.append(char_tensor)
-        pos_tensor = tensorFromIndexes(pos_list)
         triggers_tensor = tensorFromIndexes(trigger_ids).view(-1)
         rule_infos    = list()
         if (len(triggers_pos)!=len(rules)):
@@ -254,14 +242,14 @@ if __name__ == '__main__':
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, datapoint[0])
             rule_tensor                 = tensorFromIndexes(rule_ids)
             rule_infos.append((rule_tensor, torch.tensor(pg_mat, dtype=torch.float, device=device), id2source, triggers_pos[i]))
-        trainning_set.append((intput_tensor, chars_tensor, pos_tensor, entity_pos, triggers_tensor, rule_infos))
+        trainning_set.append((intput_tensor, entity_pos, triggers_tensor, rule_infos))
     
     learning_rate = 0.0001
-    hidden_size = 256
+    hidden_size = 100
 
-    encoder    = EncoderRNN(input_lang.n_words, 100, char_lang.n_words, hidden_size, pl1.n_words, hidden_size, embeds).to(device)
+    encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
-    classifier = Classifier(2 * hidden_size, hidden_size, len(input_lang.labels)).to(device)
+    classifier = Classifier(4 * hidden_size, hidden_size, len(input_lang.labels)).to(device)
 
     encoder_optimizer    = optim.SGD(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.SGD(classifier.parameters(), lr=learning_rate)
@@ -275,7 +263,7 @@ if __name__ == '__main__':
 
         start = time.time()
         for i, data in enumerate(trainning_set):
-            loss = train(data[0], data[1], data[2], data[3], data[4], data[5],
+            loss = train(data[0], data[1], data[2], data[3],
                      encoder, classifier, decoder, 
                      encoder_optimizer, classifier_optimizer, 
                      decoder_optimizer, criterion,
@@ -292,7 +280,7 @@ if __name__ == '__main__':
         print_loss_total = 0
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
-        evaluate(encoder, decoder, classifier, raw_test, input_lang, pl1, char_lang, rule_lang)
+        evaluate(encoder, decoder, classifier, raw_test, input_lang, rule_lang)
         os.mkdir("model_new2/%d"%epoch)
         PATH = "model_new2/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
