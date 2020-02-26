@@ -202,7 +202,7 @@ def eval_rules(references, candidates):
             print ("cand", r)
             print ("ref ", references[i][0])
             print ()
-    print (len(candidates))
+    # print (len(candidates))
     return c/len(candidates), corpus_bleu(references, candidates)
 
 if __name__ == '__main__':
@@ -236,8 +236,8 @@ if __name__ == '__main__':
         intput_tensor   = tensorFromIndexes(input)
         triggers_tensor = tensorFromIndexes(trigger_ids).view(-1)
         rule_infos    = list()
-        if (len(triggers_pos)!=len(rules)):
-            print(triggers_pos, rules)
+        # if (len(triggers_pos)!=len(rules)):
+        #     print(triggers_pos, rules)
         for i, rule in enumerate(rules):
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, datapoint[0])
             rule_tensor                 = tensorFromIndexes(rule_ids)
