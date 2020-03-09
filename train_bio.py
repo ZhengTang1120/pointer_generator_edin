@@ -61,7 +61,7 @@ def get_pgmat(lang, input):
         pg_mat[sourceset[word]-lang.n_words][i] = 1
     return pg_mat, id2source
 
-def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classifier, decoder, 
+def train(input_tensor, entity_pos, triggers_tensor, rule_infos, edge_index, encoder, classifier, decoder, 
     encoder_optimizer, classifier_optimizer, decoder_optimizer, criterion, epoch):
     teacher_forcing_ratio = 0.5
 
@@ -72,7 +72,7 @@ def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classi
 
     loss = 0
 
-    encoder_output, encoder_hidden = encoder(input_tensor)
+    encoder_output, encoder_hidden = encoder(input_tensor, edge_index)
 
     encoder_outputs  = encoder_output.view(input_length, -1)
     entity_vec       = encoder_outputs[entity_pos]
@@ -84,7 +84,7 @@ def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classi
         rule_length    = rule_tensor.size(0)
         decoder_input  = torch.tensor([[SOS_token]], device=device)
         trigger_vec    = encoder_outputs[trigger_pos]
-        decoder_hidden = encoder_hidden
+        decoder_hidden = (encoder_hidden[0].view(1, 1,-1), encoder_hidden[1].view(1, 1,-1))
 
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
 
@@ -116,6 +116,9 @@ def train(input_tensor, entity_pos, triggers_tensor, rule_infos, encoder, classi
     return loss.item()
 
 def evaluate(encoder, decoder, classifier, test, input_lang, rule_lang):
+    encoder.eval()
+    decoder.eval()
+    classifier.eval()
     tp = 0.0
     pos = 0.0
     true = 0.0
@@ -132,7 +135,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, rule_lang):
         triggers_pos = [t for t in datapoint[3]]
         triggers_lbl = datapoint[4]
         rules        = datapoint[5]
-
+        edge_index   = torch.tensor(datapoint[7], dtype=torch.long, device=device)
 
         rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rules[0], datapoint[0])
         pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
@@ -141,7 +144,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, rule_lang):
             input_tensor   = tensorFromIndexes(input)
             input_length = input_tensor.size(0)
 
-            encoder_output, encoder_hidden = encoder(input_tensor)
+            encoder_output, encoder_hidden = encoder(input_tensor, edge_index)
 
             encoder_outputs  = encoder_output.view(input_length, -1)
             entity_vec       = encoder_outputs[entity_pos]
@@ -156,7 +159,7 @@ def evaluate(encoder, decoder, classifier, test, input_lang, rule_lang):
 
                     decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
                     trigger_vec    = encoder_outputs[i]
-                    decoder_hidden = encoder_hidden
+                    decoder_hidden = (encoder_hidden[0].view(1, 1,-1), encoder_hidden[1].view(1, 1,-1))
 
                     decoded_rule = []
                     for di in range(50):
@@ -233,6 +236,8 @@ if __name__ == '__main__':
         trigger_ids  = [input_lang.label2id[triggers_lbl[triggers_pos.index(i)]] if i in triggers_pos else 0 for i, _ in enumerate(input)]
         rules        = datapoint[5]
 
+        edge_index   = torch.tensor(datapoint[7], dtype=torch.long, device=device)
+
         intput_tensor   = tensorFromIndexes(input)
         triggers_tensor = tensorFromIndexes(trigger_ids).view(-1)
         rule_infos    = list()
@@ -242,7 +247,7 @@ if __name__ == '__main__':
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, datapoint[0])
             rule_tensor                 = tensorFromIndexes(rule_ids)
             rule_infos.append((rule_tensor, torch.tensor(pg_mat, dtype=torch.float, device=device), id2source, triggers_pos[i]))
-        trainning_set.append((intput_tensor, entity_pos, triggers_tensor, rule_infos))
+        trainning_set.append((intput_tensor, entity_pos, triggers_tensor, rule_infos, edge_index))
     
     learning_rate = 0.0001
     hidden_size = 100
@@ -257,13 +262,17 @@ if __name__ == '__main__':
     criterion = nn.NLLLoss()
     for epoch in range(20):
 
+        encoder.train()
+        decoder.train()
+        classifier.train()
+
         random.shuffle(trainning_set)
 
         print_loss_total = 0
 
         start = time.time()
         for i, data in enumerate(trainning_set):
-            loss = train(data[0], data[1], data[2], data[3],
+            loss = train(data[0], data[1], data[2], data[3], data[4],
                      encoder, classifier, decoder, 
                      encoder_optimizer, classifier_optimizer, 
                      decoder_optimizer, criterion,
@@ -281,8 +290,8 @@ if __name__ == '__main__':
         print('%s (%d %d%%) %.4f' % (timeSince(start, (i+1) / len(trainning_set)),
                 (i+1), (i+1) / len(trainning_set) * 100, print_loss_avg))
         evaluate(encoder, decoder, classifier, raw_test, input_lang, rule_lang)
-        os.mkdir("model_new2/%d"%epoch)
-        PATH = "model_new2/%d"%epoch
+        os.mkdir("model_gcn/%d"%epoch)
+        PATH = "model_gcn/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(decoder, PATH+"/decoder")
         torch.save(classifier, PATH+"/classifier")

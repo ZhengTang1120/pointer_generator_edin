@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 from language import *
+from torch_geometric.nn import GCNConv
 
 device = torch.device("cpu")
 
@@ -14,9 +15,12 @@ class EncoderRNN(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.rnn = nn.LSTM(hidden_size, hidden_size, bidirectional=True)
 
-    def forward(self, input):
+        self.gcn = GCNConv(2 * self.hidden_size, 2 * self.hidden_size)
+
+    def forward(self, input, edge_index):
         embedded = self.embedding(input).view(-1, 1, self.hidden_size)
         output, hidden = self.rnn(embedded)
+        output = self.gcn(output.view(-1, 2 * self.hidden_size), edge_index)
         return output, hidden
 
 class Classifier(nn.Module):
@@ -31,7 +35,7 @@ class Classifier(nn.Module):
         input  = torch.cat((input, entity.repeat(1, input.size(0)).view(input.size(0), -1)), 1)
         hidden = torch.tanh(self.hidden(input))
         output = self.softmax(self.out(hidden))
-        return output
+        return torch.log(output)
 
 class AttnDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p=0.1):
@@ -44,7 +48,7 @@ class AttnDecoderRNN(nn.Module):
         self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size*2, bias=False)
         self.attn_combine = nn.Linear(self.hidden_size * 4, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
-        self.rnn = nn.LSTM(3 * self.hidden_size, self.hidden_size, bidirectional=True)
+        self.rnn = nn.LSTM(3 * self.hidden_size, self.hidden_size * 2)
         self.out = nn.Linear(self.hidden_size, self.output_size)
 
         self.wh = nn.Linear(self.hidden_size * 2, 1, bias=False)
@@ -54,9 +58,7 @@ class AttnDecoderRNN(nn.Module):
     def forward(self, input, hidden, encoder_outputs, trigger, pg_mat):
         embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
-
         output, hidden = self.rnn(torch.cat((embedded, trigger.view(1, 1, -1)), 2), hidden)
-
         attn_weights = F.softmax(
             torch.mm(
                 self.attn(hidden[0].view( 1,-1)), torch.t(encoder_outputs)
