@@ -3,19 +3,23 @@ import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 from language import *
+from transformers import BertTokenizer, BertModel
 
 device = torch.device("cpu")
 
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
 class EncoderRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, pretrained):
+    def __init__(self, hidden_size):
         super(EncoderRNN, self).__init__()
         self.hidden_size = hidden_size
-
-        self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
-        self.rnn = nn.LSTM(hidden_size, hidden_size, bidirectional=True)
+        self.bert = BertModel.from_pretrained('bert-base-uncased')
+        self.bert.to(device)
+        self.rnn = nn.LSTM(self.bert.config.hidden_size, hidden_size, bidirectional=True)
 
     def forward(self, input):
-        embedded = self.embedding(input).view(-1, 1, self.hidden_size)
+        embedded = self.bert(input)
+        print (embedded)
         output, hidden = self.rnn(embedded)
         return output, hidden
 
@@ -25,12 +29,13 @@ class Classifier(nn.Module):
         self.hidden_size = hidden_size
         self.hidden = nn.Linear(input_size, hidden_size)
         self.out = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, input, entity):
-        input  = torch.cat((input, entity.repeat(1, input.size(0)).view(input.size(0), -1)), 1)
-        hidden = torch.tanh(self.hidden(input))
-        output = self.softmax(self.out(hidden))
+    def forward(self, input, cause, effect):
+        input  = torch.cat((input, cause, effect))
+        hidden = self.relu(self.hidden(input))
+        output = self.sigmoid(self.out(hidden))
         return output
 
 class AttnDecoderRNN(nn.Module):

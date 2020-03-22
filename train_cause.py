@@ -88,22 +88,18 @@ if __name__ == '__main__':
     raw_test  = raw_train[:3000]
     raw_train = raw_train[3000:]
     for datapoint in raw_train:
-        input_lang.addSentence(datapoint[2])
-    for datapoint in raw_train:
-        input = makeIndexes(input_lang, datapoint[2])
         if datapoint[1] in ['not_causal', 'hastopic']:
             label = 0
         else:
             label = 1
-        input_tensor   = tensorFromIndexes(input)
+        input_tensor = torch.tensor([tokenizer.encode(datapoint[2])])
         label_tensor = torch.tensor([label], dtype=torch.float, device=device)
         trainning_set.append((input_tensor, label_tensor, datapoint[3][0], datapoint[4][0]))
-    embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
 
     learning_rate = 0.001
-    hidden_size = 300
+    hidden_size = 256
 
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
+    encoder    = EncoderRNN(hidden_size).to(device)
     classifier = Classifier(6 * hidden_size, hidden_size, 1).to(device)
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
