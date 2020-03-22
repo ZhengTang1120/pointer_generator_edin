@@ -27,8 +27,8 @@ class Classifier(nn.Module):
         self.out = nn.Linear(hidden_size, output_size)
         self.softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, input, entity):
-        input  = torch.cat((input, entity.repeat(1, input.size(0)).view(input.size(0), -1)), 1)
+    def forward(self, input, cause, effect):
+        input  = torch.cat((input, cause, effect))
         hidden = torch.tanh(self.hidden(input))
         output = self.softmax(self.out(hidden))
         return output
