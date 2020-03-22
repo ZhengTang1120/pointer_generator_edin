@@ -25,12 +25,13 @@ class Classifier(nn.Module):
         self.hidden_size = hidden_size
         self.hidden = nn.Linear(input_size, hidden_size)
         self.out = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, input, cause, effect):
         input  = torch.cat((input, cause, effect))
-        hidden = torch.tanh(self.hidden(input))
-        output = self.softmax(self.out(hidden))
+        hidden = self.relu(self.hidden(input))
+        output = self.sigmoid(self.out(hidden))
         return output
 
 class AttnDecoderRNN(nn.Module):
