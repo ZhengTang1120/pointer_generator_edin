@@ -91,7 +91,7 @@ if __name__ == '__main__':
         input_lang.addSentence(datapoint[2])
     for datapoint in raw_train:
         input = makeIndexes(input_lang, datapoint[2])
-        if datapoint[1]=='not_causal':
+        if datapoint[1] in ['not_causal', 'hastopic']:
             label = 0
         else:
             label = 1
