@@ -18,8 +18,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
 
     encoder_optimizer.zero_grad()
     classifier_optimizer.zero_grad()
-
-    input_length = input_tensor.size(0)
+    input_length = input_tensor.size(1)
 
     loss = 0
 

@@ -18,8 +18,7 @@ class EncoderRNN(nn.Module):
         self.rnn = nn.LSTM(self.bert.config.hidden_size, hidden_size, bidirectional=True)
 
     def forward(self, input):
-        embedded = self.bert(input)
-        print (embedded)
+        embedded = self.bert(input)[0].permute(1,0,2)
         output, hidden = self.rnn(embedded)
         return output, hidden
 
