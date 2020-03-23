@@ -91,9 +91,10 @@ if __name__ == '__main__':
             label = 0
         else:
             label = 1
-        input_tensor = torch.tensor([tokenizer.encode(datapoint[2])])
-        label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-        trainning_set.append((input_tensor, label_tensor, datapoint[3][0], datapoint[4][0]))
+        if len(datapoint[2]) < 512:
+            input_tensor = torch.tensor([tokenizer.encode(datapoint[2])])
+            label_tensor = torch.tensor([label], dtype=torch.float, device=device)
+            trainning_set.append((input_tensor, label_tensor, datapoint[3][0], datapoint[4][0]))
 
     learning_rate = 0.001
     hidden_size = 256
