@@ -91,9 +91,9 @@ if __name__ == '__main__':
         input_lang.addSentence(datapoint[2])
     for datapoint in raw_train:
         input = makeIndexes(input_lang, datapoint[2])
-        if datapoint[1] in ['not_causal', 'hastopic']:
+        if datapoint[1] == 'not_causal':
             label = 0
-        else:
+        elif datapoint[1] != 'hastopic':
             label = 1
         input_tensor   = tensorFromIndexes(input)
         label_tensor = torch.tensor([label], dtype=torch.float, device=device)
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
 
     learning_rate = 0.001
-    hidden_size = 300
+    hidden_size = 100
 
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     classifier = Classifier(6 * hidden_size, hidden_size, 1).to(device)

@@ -12,10 +12,10 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
-        self.rnn = nn.LSTM(hidden_size, hidden_size, bidirectional=True)
+        self.rnn = nn.LSTM(300, hidden_size, bidirectional=True)
 
     def forward(self, input):
-        embedded = self.embedding(input).view(-1, 1, self.hidden_size)
+        embedded = self.embedding(input).view(-1, 1, 300)
         output, hidden = self.rnn(embedded)
         return output, hidden
 
