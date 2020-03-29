@@ -24,11 +24,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
     loss = 0
 
     encoder_output, encoder_hidden = encoder(input_tensor)
-
     encoder_outputs  = encoder_output.view(input_length, -1)
-    cause_vec        = encoder_outputs[cause_pos]
-    effect_vec       = encoder_outputs[effect_pos]
-    classify_output = classifier(encoder_outputs[-1], cause_vec, effect_vec)
+    cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
+    effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
+    classify_output, cw, ew = classifier(cause_vec, effect_vec)
     loss = criterion(classify_output, label_tensor)
 
     loss.backward()
@@ -41,40 +40,36 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
 def evaluate(encoder, classifier, test, input_lang):
     encoder.eval()
     classifier.eval()
-    count1 = 0
-    count0 = 0
-    t1 = 0
-    t0 = 0
+    t = 0.0
+    p = 0.0
+    tp = 0.0
     for datapoint in test:
-        input = makeIndexes(input_lang, datapoint[2])
-        input_tensor   = tensorFromIndexes(input)
-        if datapoint[1]=='not_causal':
-            label = 0
-            count0+=1
-        else:
-            label = 1
-            count1+=1
-
-        cause_pos, effect_pos = datapoint[3][0], datapoint[4][0]
-
-        with torch.no_grad():
-            input_length = input_tensor.size(0)
-
-
-            encoder_output, encoder_hidden = encoder(input_tensor)
-
-            encoder_outputs  = encoder_output.view(input_length, -1)
-            cause_vec        = encoder_outputs[cause_pos]
-            effect_vec       = encoder_outputs[effect_pos]
-            classify_output = classifier(encoder_outputs[-1], cause_vec, effect_vec)
-            if label == 1:
-                if (np.round(classify_output).item()==label):
-                    t1 += 1
+        if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+            input = makeIndexes(input_lang, datapoint[2])
+            input_tensor   = tensorFromIndexes(input)
+            if datapoint[1]=='not_causal':
+                label = 0
             else:
-                if (np.round(classify_output).item()==label):
-                    t0 += 1
-    print (count0, t0)
-    print (count1, t1)
+                label = 1
+                t+=1
+
+            cause_pos, effect_pos = datapoint[3], datapoint[4]
+
+            with torch.no_grad():
+                input_length = input_tensor.size(0)
+
+
+                encoder_output, encoder_hidden = encoder(input_tensor)
+
+                encoder_outputs  = encoder_output.view(input_length, -1)
+                cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
+                effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
+                classify_output, cw, ew = classifier(cause_vec, effect_vec)
+                if np.round(classify_output).item() == 1:
+                    p += 1
+                    if (np.round(classify_output).item()==label):
+                        tp += 1
+    print (tp/t, tp/p)
 
 if __name__ == '__main__':
 
@@ -90,21 +85,21 @@ if __name__ == '__main__':
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
     for datapoint in raw_train:
-        input = makeIndexes(input_lang, datapoint[2])
-        if datapoint[1] == 'not_causal':
-            label = 0
-        elif datapoint[1] != 'hastopic':
-            label = 1
-        input_tensor   = tensorFromIndexes(input)
-        label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-        trainning_set.append((input_tensor, label_tensor, datapoint[3][0], datapoint[4][0]))
+        if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+            input = makeIndexes(input_lang, datapoint[2])
+            if datapoint[1] == 'not_causal':
+                label = 0
+            else:
+                label = 1
+            input_tensor   = tensorFromIndexes(input)
+            label_tensor = torch.tensor([label], dtype=torch.float, device=device)
+            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4]))
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
-
     learning_rate = 0.001
     hidden_size = 100
 
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
-    classifier = Classifier(6 * hidden_size, hidden_size, 1).to(device)
+    classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)

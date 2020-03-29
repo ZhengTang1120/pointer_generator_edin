@@ -4,7 +4,15 @@ from torch import optim
 import torch.nn.functional as F
 from language import *
 
-device = torch.device("cpu")
+SEED = 1234
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, pretrained):
@@ -22,17 +30,27 @@ class EncoderRNN(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(Classifier, self).__init__()
-        self.hidden_size = hidden_size
         self.hidden = nn.Linear(input_size, hidden_size)
         self.out = nn.Linear(hidden_size, output_size)
-        self.relu = nn.ReLU()
+        # self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, input, cause, effect):
-        input  = torch.cat((input, cause, effect))
-        hidden = self.relu(self.hidden(input))
+        self.attn = nn.Linear(hidden_size * 2, 1)
+
+    def forward(self, cause, effect):
+        cause, cw = self.event_summary(cause)
+        effect, ew = self.event_summary(effect)
+        input  = torch.cat((cause, effect))
+        hidden = self.hidden(input)
         output = self.sigmoid(self.out(hidden))
-        return output
+        return output, cw, ew
+
+    def event_summary(self, event):
+        attn_weights = F.softmax(torch.t(self.attn(event)), dim=1)
+        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
+                                 event.unsqueeze(0))
+        return attn_applied[0, 0], attn_weights
+
 
 class AttnDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, dropout_p=0.1):
