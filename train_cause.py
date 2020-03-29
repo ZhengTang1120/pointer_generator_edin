@@ -1,7 +1,6 @@
 from model import *
 from utils import *
 import json
-import random
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]

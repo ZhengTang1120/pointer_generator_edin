@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 from language import *
+import random
 
 SEED = 1234
 
