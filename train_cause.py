@@ -1,6 +1,7 @@
 from model import *
 from utils import *
 import json
+import os
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
@@ -42,6 +43,7 @@ def evaluate(encoder, classifier, test, input_lang):
     t = 0.0
     p = 0.0
     tp = 0.0
+
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
             input = makeIndexes(input_lang, datapoint[2])
@@ -64,11 +66,15 @@ def evaluate(encoder, classifier, test, input_lang):
                 cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
                 effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
                 classify_output, cw, ew = classifier(cause_vec, effect_vec)
+                
+                print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
+                print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
+                print ()
                 if np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
-    print (tp/t, tp/p)
+    print (tp, t, p, tp/t, tp/p)
 
 if __name__ == '__main__':
 
@@ -80,6 +86,8 @@ if __name__ == '__main__':
     random.shuffle(raw_train)
     print(len(raw_train))
     raw_test  = raw_train[:3000]
+    with open('test.json', 'w') as f:
+        f.write(json.dumps(raw_test))
     raw_train = raw_train[3000:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
@@ -119,4 +127,7 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, raw_test, input_lang)
-
+        os.mkdir("model_cause/%d"%epoch)
+        PATH = "model_cause/%d"%epoch
+        torch.save(encoder, PATH+"/encoder")
+        torch.save(classifier, PATH+"/classifier")
