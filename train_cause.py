@@ -72,6 +72,7 @@ def evaluate(encoder, classifier, test, input_lang):
 
 def embed_cause_effect(dataset):
     for datapoint in dataset:
+        datapoint[2] = [w.lower() for w in datapoint[2]]
         cs = datapoint[3][0]
         ce = datapoint[3][-1]+2
         es = datapoint[4][0]
@@ -109,7 +110,9 @@ if __name__ == '__main__':
         else:
             label = 1
         if len(datapoint[2]) < 512:
+            # print(datapoint[2], len(datapoint[2]))
             input_tensor = torch.tensor([tokenizer.encode(datapoint[2])])
+            # print(input_tensor, input_tensor.size())
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             trainning_set.append((input_tensor, label_tensor))
 
