@@ -15,12 +15,12 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.bert.to(device)
-        self.rnn = nn.LSTM(self.bert.config.hidden_size, hidden_size, bidirectional=True)
+        # self.rnn = nn.LSTM(self.bert.config.hidden_size, hidden_size, bidirectional=True)
 
     def forward(self, input):
-        embedded = self.bert(input)[0].permute(1,0,2)
-        output, hidden = self.rnn(embedded)
-        return output, hidden
+        output = self.bert(input)[0].permute(1,0,2)
+        # output, hidden = self.rnn(embedded)
+        return output
 
 class Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):

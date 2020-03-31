@@ -22,12 +22,12 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
 
     loss = 0
 
-    encoder_output, encoder_hidden = encoder(input_tensor)
+    encoder_output = encoder(input_tensor)
 
     encoder_outputs  = encoder_output.view(input_length, -1)
     cause_vec        = encoder_outputs[cause_pos]
     effect_vec       = encoder_outputs[effect_pos]
-    classify_output = classifier(encoder_outputs[-1], cause_vec, effect_vec)
+    classify_output  = classifier(encoder_outputs[0], cause_vec, effect_vec)
     loss = criterion(classify_output, label_tensor)
 
     loss.backward()
@@ -60,7 +60,7 @@ def evaluate(encoder, classifier, test, input_lang):
             input_length = input_tensor.size(0)
 
 
-            encoder_output, encoder_hidden = encoder(input_tensor)
+            encoder_output = encoder(input_tensor)
 
             encoder_outputs  = encoder_output.view(input_length, -1)
             cause_vec        = encoder_outputs[cause_pos]
