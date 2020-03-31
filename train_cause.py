@@ -23,8 +23,7 @@ def train(input_tensor, label_tensor, encoder, classifier,
     loss = 0
 
     encoder_output = encoder(input_tensor)
-
-    # encoder_outputs  = encoder_output.view(input_length, -1)
+    encoder_outputs  = encoder_output.view(input_length, -1)
     # cause_vec        = encoder_outputs[cause_pos]
     # effect_vec       = encoder_outputs[effect_pos]
     classify_output  = classifier(encoder_outputs[0])
@@ -40,19 +39,17 @@ def train(input_tensor, label_tensor, encoder, classifier,
 def evaluate(encoder, classifier, test, input_lang):
     encoder.eval()
     classifier.eval()
-    count1 = 0
-    count0 = 0
-    t1 = 0
-    t0 = 0
+    t = 0.0
+    p = 0.0
+    tp = 0.0
     for datapoint in test:
         input = makeIndexes(input_lang, datapoint[2])
         input_tensor   = tensorFromIndexes(input)
         if datapoint[1]=='not_causal':
             label = 0
-            count0+=1
         else:
             label = 1
-            count1+=1
+            t+=1
 
         # cause_pos, effect_pos = datapoint[3][0], datapoint[4][0]
 
@@ -62,31 +59,37 @@ def evaluate(encoder, classifier, test, input_lang):
 
             encoder_output = encoder(input_tensor)
 
-            # encoder_outputs  = encoder_output.view(input_length, -1)
+            encoder_outputs  = encoder_output.view(input_length, -1)
             # cause_vec        = encoder_outputs[cause_pos]
             # effect_vec       = encoder_outputs[effect_pos]
-            classify_output = classifier(encoder_output[0])
-            if label == 1:
+            classify_output = classifier(encoder_outputs[0])
+        
+            if np.round(classify_output).item() == 1:
+                p += 1
                 if (np.round(classify_output).item()==label):
-                    t1 += 1
-            else:
-                if (np.round(classify_output).item()==label):
-                    t0 += 1
-    print (count0, t0)
-    print (count1, t1)
+                    tp += 1
+    print (t, p, tp)
 
 def embed_cause_effect(dataset):
     for datapoint in dataset:
         cs = datapoint[3][0]
-        ce = datapoint[3][-1]+1
+        ce = datapoint[3][-1]+2
         es = datapoint[4][0]
-        ee = datapoint[4][-1]+1
-
-        datapoint[2].insert(cs, '-CLB-')
-        datapoint[2].insert(ce, '-CRB-')
-        datapoint[2].insert(es, '-ELB-')
-        datapoint[2].insert(ee, '-ERB-')
-
+        ee = datapoint[4][-1]+2
+        if cs < es:
+            es += 2
+            ee += 2
+            datapoint[2].insert(cs, '-CLB-')
+            datapoint[2].insert(ce, '-CRB-')
+            datapoint[2].insert(es, '-ELB-')
+            datapoint[2].insert(ee, '-ERB-')
+        else:
+            cs += 2
+            ce += 2
+            datapoint[2].insert(es, '-ELB-')
+            datapoint[2].insert(ee, '-ERB-')
+            datapoint[2].insert(cs, '-CLB-')
+            datapoint[2].insert(ce, '-CRB-') 
     return dataset
 
 if __name__ == '__main__':
