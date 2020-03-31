@@ -31,8 +31,8 @@ class Classifier(nn.Module):
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, input, cause, effect):
-        input  = torch.cat((input, cause, effect))
+    def forward(self, input):
+        # input  = torch.cat((input, cause, effect))
         hidden = self.relu(self.hidden(input))
         output = self.sigmoid(self.out(hidden))
         return output

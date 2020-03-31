@@ -11,7 +11,7 @@ def makeIndexes(lang, seq):
 def tensorFromIndexes(indexes):
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
-def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier, 
+def train(input_tensor, label_tensor, encoder, classifier, 
     encoder_optimizer, classifier_optimizer, criterion):
     encoder.train()
     classifier.train()
@@ -24,10 +24,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
 
     encoder_output = encoder(input_tensor)
 
-    encoder_outputs  = encoder_output.view(input_length, -1)
-    cause_vec        = encoder_outputs[cause_pos]
-    effect_vec       = encoder_outputs[effect_pos]
-    classify_output  = classifier(encoder_outputs[0], cause_vec, effect_vec)
+    # encoder_outputs  = encoder_output.view(input_length, -1)
+    # cause_vec        = encoder_outputs[cause_pos]
+    # effect_vec       = encoder_outputs[effect_pos]
+    classify_output  = classifier(encoder_outputs[0])
     loss = criterion(classify_output, label_tensor)
 
     loss.backward()
@@ -54,7 +54,7 @@ def evaluate(encoder, classifier, test, input_lang):
             label = 1
             count1+=1
 
-        cause_pos, effect_pos = datapoint[3][0], datapoint[4][0]
+        # cause_pos, effect_pos = datapoint[3][0], datapoint[4][0]
 
         with torch.no_grad():
             input_length = input_tensor.size(0)
@@ -62,10 +62,10 @@ def evaluate(encoder, classifier, test, input_lang):
 
             encoder_output = encoder(input_tensor)
 
-            encoder_outputs  = encoder_output.view(input_length, -1)
-            cause_vec        = encoder_outputs[cause_pos]
-            effect_vec       = encoder_outputs[effect_pos]
-            classify_output = classifier(encoder_outputs[-1], cause_vec, effect_vec)
+            # encoder_outputs  = encoder_output.view(input_length, -1)
+            # cause_vec        = encoder_outputs[cause_pos]
+            # effect_vec       = encoder_outputs[effect_pos]
+            classify_output = classifier(encoder_output[0])
             if label == 1:
                 if (np.round(classify_output).item()==label):
                     t1 += 1
@@ -75,13 +75,27 @@ def evaluate(encoder, classifier, test, input_lang):
     print (count0, t0)
     print (count1, t1)
 
+def embed_cause_effect(dataset):
+    for datapoint in dataset:
+        cs = datapoint[3][0]
+        ce = datapoint[3][-1]+1
+        es = datapoint[4][0]
+        ee = datapoint[4][-1]+1
+
+        datapoint[2].insert(cs, '-CLB-')
+        datapoint[2].insert(ce, '-CRB-')
+        datapoint[2].insert(es, '-ELB-')
+        datapoint[2].insert(ee, '-ERB-')
+
+    return dataset
+
 if __name__ == '__main__':
 
     input_lang = Lang("input")
     trainning_set = list()
     with open('training_data.json') as f:
         raw_train = json.load(f)
-
+    raw_train = embed_cause_effect(raw_train)
     random.shuffle(raw_train)
     print(len(raw_train))
     raw_test  = raw_train[:3000]
@@ -94,13 +108,13 @@ if __name__ == '__main__':
         if len(datapoint[2]) < 512:
             input_tensor = torch.tensor([tokenizer.encode(datapoint[2])])
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-            trainning_set.append((input_tensor, label_tensor, datapoint[3][0], datapoint[4][0]))
+            trainning_set.append((input_tensor, label_tensor))
 
     learning_rate = 0.001
     hidden_size = 256
 
     encoder    = EncoderRNN(hidden_size).to(device)
-    classifier = Classifier(6 * hidden_size, hidden_size, 1).to(device)
+    classifier = Classifier(encoder.bert.config.hidden_size, hidden_size, 1).to(device)
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
@@ -113,7 +127,7 @@ if __name__ == '__main__':
         total_loss = 0
         for i, data in enumerate(trainning_set):
 
-            loss = train(data[0], data[1], data[2], data[3],
+            loss = train(data[0], data[1],
                      encoder, classifier, encoder_optimizer, 
                      classifier_optimizer, criterion)
             total_loss += loss
