@@ -1,0 +1,6 @@
+
+*.pyc
+BioNLP-ST-2013_GE_*/*
+model*/*
+pubmed*/*
+
