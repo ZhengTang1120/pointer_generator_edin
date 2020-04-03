@@ -2,6 +2,7 @@ from model import *
 from utils import *
 import json
 import os
+import argparse
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
@@ -78,15 +79,19 @@ def evaluate(encoder, classifier, test, input_lang):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('train')
+    args = parser.parse_args()
+
     input_lang = Lang("input")
     trainning_set = list()
-    with open('training_data.json') as f:
+    with open('training_data_%s.json'%args.train) as f:
         raw_train = json.load(f)
 
     random.shuffle(raw_train)
     print(len(raw_train))
     raw_test  = raw_train[:3000]
-    with open('test.json', 'w') as f:
+    with open('test_%s.json'%args.train, 'w') as f:
         f.write(json.dumps(raw_test))
     raw_train = raw_train[3000:]
     for datapoint in raw_train:
@@ -127,7 +132,7 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, raw_test, input_lang)
-        os.mkdir("model_cause/%d"%epoch)
-        PATH = "model_cause/%d"%epoch
+        os.mkdir("model_cause_%s/%d"%(args.train, epoch))
+        PATH = "model_cause_%s/%d"%(args.train, epoch)
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
