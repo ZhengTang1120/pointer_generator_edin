@@ -68,9 +68,9 @@ def evaluate(encoder, classifier, test, input_lang):
                 effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
                 classify_output, cw, ew = classifier(cause_vec, effect_vec)
                 
-                print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
-                print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
-                print ()
+                # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
+                # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
+                # print ()
                 if np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
