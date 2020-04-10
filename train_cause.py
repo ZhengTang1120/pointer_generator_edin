@@ -12,7 +12,7 @@ def makeIndexes(lang, seq):
 def tensorFromIndexes(indexes):
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
-def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier, 
+def train(input_tensor, label_tensor, cause_pos, effect_pos, trigger_pos, encoder, classifier, 
     encoder_optimizer, classifier_optimizer, criterion):
     encoder.train()
     classifier.train()
@@ -28,7 +28,11 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, encoder, classifier
     encoder_outputs  = encoder_output.view(input_length, -1)
     cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
     effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
-    classify_output, cw, ew = classifier(cause_vec, effect_vec)
+    if len(trigger_pos) != 0:
+        trigger_vec      = encoder_outputs[trigger_pos[0]]
+    else:
+        trigger_vec      = encoder_outputs[-1]
+    classify_output, cw, ew = classifier(cause_vec, effect_vec, trigger_vec)
     loss = criterion(classify_output, label_tensor)
 
     loss.backward()
@@ -55,7 +59,7 @@ def evaluate(encoder, classifier, test, input_lang):
                 label = 1
                 t+=1
 
-            cause_pos, effect_pos = datapoint[3], datapoint[4]
+            cause_pos, effect_pos, trigger_pos = datapoint[3], datapoint[4], datapoint[5]
 
             with torch.no_grad():
                 input_length = input_tensor.size(0)
@@ -66,7 +70,11 @@ def evaluate(encoder, classifier, test, input_lang):
                 encoder_outputs  = encoder_output.view(input_length, -1)
                 cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
                 effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
-                classify_output, cw, ew = classifier(cause_vec, effect_vec)
+                if len(trigger_pos) != 0:
+                    trigger_vec      = encoder_outputs[trigger_pos[0]]
+                else:
+                    trigger_vec      = encoder_outputs[-1]
+                classify_output, cw, ew = classifier(cause_vec, effect_vec, trigger_vec)
                 
                 # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
@@ -105,13 +113,13 @@ if __name__ == '__main__':
                 label = 1
             input_tensor   = tensorFromIndexes(input)
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4]))
+            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], datapoint[5]))
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = 0.001
     hidden_size = 100
 
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
-    classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
+    classifier = Classifier(6 * hidden_size, hidden_size, 1).to(device)
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
@@ -124,7 +132,7 @@ if __name__ == '__main__':
         total_loss = 0
         for i, data in enumerate(trainning_set):
 
-            loss = train(data[0], data[1], data[2], data[3],
+            loss = train(data[0], data[1], data[2], data[3], data[4],
                      encoder, classifier, encoder_optimizer, 
                      classifier_optimizer, criterion)
             total_loss += loss
