@@ -37,10 +37,10 @@ class Classifier(nn.Module):
 
         self.attn = nn.Linear(hidden_size * 2, 1)
 
-    def forward(self, cause, effect, trigger):
+    def forward(self, cause, effect):
         cause, cw = self.event_summary(cause)
         effect, ew = self.event_summary(effect)
-        input  = torch.cat((cause, effect, trigger))
+        input  = torch.cat((cause, effect))
         hidden = self.hidden(input)
         output = self.sigmoid(self.out(hidden))
         return output, cw, ew
