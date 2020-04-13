@@ -22,10 +22,23 @@ class EncoderRNN(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.rnn = nn.LSTM(300, hidden_size, bidirectional=True)
 
-    def forward(self, input):
+        self.attn = nn.Linear(hidden_size * 2, 1)
+
+    def forward(self, input, cause_pos, effect_pos):
         embedded = self.embedding(input).view(-1, 1, 300)
         output, hidden = self.rnn(embedded)
-        return output, hidden
+        outputs  = output.view(input.size(0), -1)
+        cause_vec        = outputs[cause_pos[0]:cause_pos[-1]+1]
+        effect_vec       = outputs[effect_pos[0]:effect_pos[-1]+1]
+        cause, cw = self.event_summary(cause_vec)
+        effect, ew = self.event_summary(effect_vec)
+        return outputs, hidden, cause, effect, cw, ew
+
+    def event_summary(self, event):
+        attn_weights = F.softmax(torch.t(self.attn(event)), dim=1)
+        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
+                                 event.unsqueeze(0))
+        return attn_applied[0, 0], attn_weights
 
 class Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -35,21 +48,21 @@ class Classifier(nn.Module):
         # self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
-        self.attn = nn.Linear(hidden_size * 2, 1)
+        # self.attn = nn.Linear(hidden_size * 2, 1)
 
     def forward(self, cause, effect):
-        cause, cw = self.event_summary(cause)
-        effect, ew = self.event_summary(effect)
+        # cause, cw = self.event_summary(cause)
+        # effect, ew = self.event_summary(effect)
         input  = torch.cat((cause, effect))
         hidden = self.hidden(input)
         output = self.sigmoid(self.out(hidden))
-        return output, cw, ew
+        return output
 
-    def event_summary(self, event):
-        attn_weights = F.softmax(torch.t(self.attn(event)), dim=1)
-        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
-                                 event.unsqueeze(0))
-        return attn_applied[0, 0], attn_weights
+    # def event_summary(self, event):
+    #     attn_weights = F.softmax(torch.t(self.attn(event)), dim=1)
+    #     attn_applied = torch.bmm(attn_weights.unsqueeze(0),
+    #                              event.unsqueeze(0))
+    #     return attn_applied[0, 0], attn_weights
 
 
 class AttnDecoderRNN(nn.Module):
@@ -59,22 +72,24 @@ class AttnDecoderRNN(nn.Module):
         self.output_size = output_size
         self.dropout_p = dropout_p
 
-        self.embedding = nn.Embedding(self.output_size + 602, self.hidden_size)
+        self.embedding = nn.Embedding(self.output_size, self.hidden_size)
         self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size*2, bias=False)
         self.attn_combine = nn.Linear(self.hidden_size * 4, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
-        self.rnn = nn.LSTM(3 * self.hidden_size, self.hidden_size, bidirectional=True)
+        self.rnn = nn.LSTM(5 * self.hidden_size, self.hidden_size, bidirectional=True)
         self.out = nn.Linear(self.hidden_size, self.output_size)
 
-        self.wh = nn.Linear(self.hidden_size * 2, 1, bias=False)
-        self.ws = nn.Linear(self.hidden_size * 2, 1, bias=False)
-        self.wx = nn.Linear(self.hidden_size, 1)
+        self.softmax = nn.LogSoftmax(dim=1)
 
-    def forward(self, input, hidden, encoder_outputs, trigger, pg_mat):
+        # self.wh = nn.Linear(self.hidden_size * 2, 1, bias=False)
+        # self.ws = nn.Linear(self.hidden_size * 2, 1, bias=False)
+        # self.wx = nn.Linear(self.hidden_size, 1)
+
+    def forward(self, input, hidden, encoder_outputs, cause, effect):
         embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
-        output, hidden = self.rnn(torch.cat((embedded, trigger.view(1, 1, -1)), 2), hidden)
+        output, hidden = self.rnn(torch.cat((embedded, cause.view(1, 1, -1), effect.view(1, 1, -1)), 2), hidden)
 
         attn_weights = F.softmax(
             torch.mm(
@@ -83,9 +98,9 @@ class AttnDecoderRNN(nn.Module):
             , dim=1)
         attn_applied = torch.bmm(attn_weights.unsqueeze(0),
                                  encoder_outputs.unsqueeze(0))
-        p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]
+        # p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]
 
-        atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen))
+        # atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen))
 
         output = torch.cat((hidden[0].view( 1,-1), attn_applied[0]), 1)
         output = self.attn_combine(output).unsqueeze(0)
@@ -93,10 +108,11 @@ class AttnDecoderRNN(nn.Module):
         output = F.relu(output)
         
 
-        output = F.softmax(self.out(output[0]), dim=1)
-        output = output * p_gen
-        output = torch.cat((output, atten_p),1)
-        output = torch.log(output)
+        # output = F.softmax(self.out(output[0]), dim=1)
+        output = self.softmax(self.out(output[0]))
+        # output = output * p_gen
+        # output = torch.cat((output, atten_p),1)
+        # output = torch.log(output)
 
         return output, hidden, attn_weights
 
