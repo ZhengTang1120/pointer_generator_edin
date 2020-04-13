@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
         os.mkdir("model_cause_d%s/%d"%(args.train, epoch))
-        PATH = "model_cause_de%s/%d"%(args.train, epoch)
+        PATH = "model_cause_d%s/%d"%(args.train, epoch)
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
