@@ -159,8 +159,8 @@ if __name__ == '__main__':
     random.shuffle(raw_train1)
     random.shuffle(raw_train2)
     raw_test  = raw_train1[:3000] + raw_train2[:50]
-    with open('test_%s.json'%args.train, 'w') as f:
-        f.write(json.dumps(raw_test))
+    # with open('test_%s.json'%args.train, 'w') as f:
+    #     f.write(json.dumps(raw_test))
     raw_train = raw_train1[3000:] + raw_train2[50:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
         os.mkdir("model_cause_d%s/%d"%(args.train, epoch))
-        PATH = "model_cause_d%s/%d"%(args.train, epoch)
+        PATH = "model_cause_de%s/%d"%(args.train, epoch)
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
