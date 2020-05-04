@@ -18,7 +18,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     decoder, encoder_optimizer, classifier_optimizer, decoder_optimizer):
 
     criterion2 = nn.NLLLoss()
-    # criterion1 = nn.BCELoss()
+    criterion1 = nn.BCELoss()
 
     encoder.train()
     classifier.train()
