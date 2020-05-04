@@ -20,12 +20,17 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
-        self.rnn = nn.LSTM(300, hidden_size, bidirectional=True)
+        self.lemma_embedding = nn.Embedding(2, 5)
+        self.rnn = nn.LSTM(305, hidden_size, bidirectional=True)
 
         self.attn = nn.Linear(hidden_size * 2, 1)
 
     def forward(self, input, cause_pos, effect_pos):
+        lemma = [1 if i in cause_pos or i in effect_pos else 0 for i in range(input.size(0))]
+        lemma = torch.tensor(lemma, dtype=torch.long, device=device).view(-1, 1)
+        lemma_embeded = self.lemma_embedding(lemma).view(-1, 1, 5)
         embedded = self.embedding(input).view(-1, 1, 300)
+        embedded = torch.cat((embedded, lemma_embeded), dim=2)
         output, hidden = self.rnn(embedded)
         outputs  = output.view(input.size(0), -1)
         cause_vec        = outputs[cause_pos[0]:cause_pos[-1]+1]
