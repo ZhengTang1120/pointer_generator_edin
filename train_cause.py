@@ -188,6 +188,7 @@ if __name__ == '__main__':
                 rd[datapoint[5]]+=1
                 datapoint[5] = rules[datapoint[5]]
             except KeyError:
+                print (datapoint[5])
                 datapoint[5] = None
     print (rd)
     random.shuffle(raw_train1)
@@ -205,7 +206,7 @@ if __name__ == '__main__':
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
             
-            if len(datapoint) > 5:
+            if len(datapoint) > 5 and datapoint[5]:
                 rule_tensor    = tensorFromIndexes(makeIndexes(rule_lang, datapoint[5]))
                 rule = [rule_tensor]
                 if len(datapoint)>6:
