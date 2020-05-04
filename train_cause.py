@@ -36,9 +36,9 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     # cause_vec        = encoder_outputs[cause_pos[0]:cause_pos[-1]+1]
     # effect_vec       = encoder_outputs[effect_pos[0]:effect_pos[-1]+1]
     
-    # if gold:
-    #     classify_output = classifier(cause_vec, effect_vec)
-    #     loss += criterion1(classify_output, label_tensor)
+    if gold:
+        classify_output = classifier(cause_vec, effect_vec)
+        loss += criterion1(classify_output, label_tensor)
 
     if len(rule_info)!=0:
         rule_tensor    = rule_info[0]#, pg_mat, id2source = rule_info
@@ -71,7 +71,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     loss.backward()
 
     encoder_optimizer.step()
-    # classifier_optimizer.step()
+    classifier_optimizer.step()
     decoder_optimizer.step()
 
     return loss.item()
@@ -129,17 +129,24 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                             decoded_rule.append('UNK')
 
                     decoder_input = topi.squeeze().detach()
-                rule = datapoint[5] if len(datapoint)>5 else None
-                print (decoded_rule)
-                candidates.append(decoded_rule)
-                print (rule)
-                references.append([rule])
-                print ()
+                gold = True
+                if len(datapoint)>5:
+                    if len(datapoint)>6:
+                        gold = datapoint[6]
+                    else:
+                        gold = False
+                    rule = datapoint[5]
+                    print (decoded_rule)
+                    candidates.append(decoded_rule)
+                    print (rule)
+                    references.append([rule])
+                    print ()
                 
                 # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
                 # print ()
-                if np.round(classify_output).item() == 1:
+
+                if gold and np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
@@ -185,10 +192,10 @@ if __name__ == '__main__':
     print (rd)
     random.shuffle(raw_train1)
     random.shuffle(raw_train2)
-    raw_test  = raw_train1[:3000] + raw_train2[:50]
+    raw_test  = raw_train1[:3000] + raw_train2[:200]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    raw_train = raw_train1[3000:] + raw_train2[50:]
+    raw_train = raw_train1[3000:] + raw_train2[200:7000]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
@@ -201,9 +208,13 @@ if __name__ == '__main__':
             if len(datapoint) > 5:
                 rule_tensor    = tensorFromIndexes(makeIndexes(rule_lang, datapoint[5]))
                 rule = [rule_tensor]
-                gold = datapoint[4]
+                if len(datapoint)>6:
+                    gold = datapoint[6]
+                else:
+                    gold = False
             else:
                 rule = []
+                gold = True
 
 
             if datapoint[1] == 'not_causal':
