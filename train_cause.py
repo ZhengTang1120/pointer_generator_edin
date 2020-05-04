@@ -201,7 +201,7 @@ if __name__ == '__main__':
         if len(datapoint) > 5 and datapoint[5]:
             rule_lang.addSentence(datapoint[5])
     for datapoint in raw_train:
-        if datapoint[5] and len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+        if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
             
