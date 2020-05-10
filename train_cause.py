@@ -179,9 +179,9 @@ def eval_rules(references, candidates):
 
 if __name__ == '__main__':
 
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('train')
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('lr')
+    args = parser.parse_args()
 
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
@@ -239,7 +239,7 @@ if __name__ == '__main__':
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
-    learning_rate = 0.0001
+    learning_rate = float(args.lr)
     hidden_size = 100
     print (rule_lang.n_words)
     print (rule_lang.word2index)
