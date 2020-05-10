@@ -200,8 +200,7 @@ if __name__ == '__main__':
                 rd[datapoint[5]] = len(rules[datapoint[5]])
                 datapoint[5] = rules[datapoint[5]]
             except KeyError:
-                print (datapoint[5])
-                datapoint[5] = None
+                pass
     # random.shuffle(raw_train1)
     random.shuffle(raw_train2)
     raw_test  = raw_train2[:100]
