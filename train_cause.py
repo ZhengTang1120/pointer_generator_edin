@@ -191,14 +191,18 @@ if __name__ == '__main__':
     with open('eidos_extra.json') as f:
         raw_train2 = json.load(f)
     rd = defaultdict(int)
+    temp = list()
     with open("rules_cause.json") as f:
         rules = json.load(f)
         for datapoint in raw_train2:
             try:
                 rd[datapoint[5]] = len(rules[datapoint[5]])
                 datapoint[5] = rules[datapoint[5]]
+                temp.append(datapoint)
             except KeyError:
                 pass
+    raw_train2 = temp[:]
+    del temp
     random.shuffle(raw_train1)
     random.shuffle(raw_train2)
     raw_test  = raw_train1[:300:] + raw_train2[:300]
@@ -208,6 +212,7 @@ if __name__ == '__main__':
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
+            print (datapoint[5])
             rule_lang.addSentence(datapoint[5])
 
     for datapoint in raw_train:
@@ -241,29 +246,29 @@ if __name__ == '__main__':
     hidden_size = 100
     print (rule_lang.n_words)
     print (rule_lang.word2index)
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
-    classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
-    decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
+    # encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
+    # classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
+    # decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
 
-    encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
-    classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
-    decoder_optimizer    = optim.Adam(decoder.parameters(), lr=learning_rate)
+    # encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
+    # classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
+    # decoder_optimizer    = optim.Adam(decoder.parameters(), lr=learning_rate)
 
-    for epoch in range(100):
+    # for epoch in range(100):
 
-        random.shuffle(trainning_set)
-        total_loss = 0
-        for i, data in enumerate(trainning_set):
+    #     random.shuffle(trainning_set)
+    #     total_loss = 0
+    #     for i, data in enumerate(trainning_set):
 
-            loss = train(data[0], data[1], data[2], data[3],
-                     data[4], data[5],
-                     encoder, classifier, decoder, encoder_optimizer, 
-                     classifier_optimizer, decoder_optimizer)
-            total_loss += loss
+    #         loss = train(data[0], data[1], data[2], data[3],
+    #                  data[4], data[5],
+    #                  encoder, classifier, decoder, encoder_optimizer, 
+    #                  classifier_optimizer, decoder_optimizer)
+    #         total_loss += loss
 
-        print (total_loss)
+    #     print (total_loss)
 
-        evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
+    #     evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
         # os.mkdir("model_cause_e%s/%d"%(args.train, epoch))
         # PATH = "model_cause_e%s/%d"%(args.train, epoch)
         # torch.save(encoder, PATH+"/encoder")
