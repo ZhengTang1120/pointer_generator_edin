@@ -47,11 +47,9 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
     
-    # if gold:
-    #     classify_output = classifier(cause_vec, effect_vec)
-    #     print(classify_output)
-    #     print (label_tensor)
-    #     loss += criterion1(classify_output, label_tensor)
+    if gold:
+        classify_output = classifier(cause_vec, effect_vec)
+        loss += criterion1(classify_output, label_tensor)
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
@@ -158,10 +156,10 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
                 # print ()
 
-                # if gold and np.round(classify_output).item() == 1:
-                #     p += 1
-                #     if (np.round(classify_output).item()==label):
-                #         tp += 1
+                if gold and np.round(classify_output).item() == 1:
+                    p += 1
+                    if (np.round(classify_output).item()==label):
+                        tp += 1
 
     print (eval_rules(references, candidates))#(tp, p, t, eval_rules(references, candidates))
 
@@ -186,10 +184,10 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    # with open('LDC_training.json') as f:
-    #     raw_train1 = json.load(f)
-    # with open('eidos_training.json') as f:
-    #     raw_train2 = json.load(f)
+    with open('LDC_training.json') as f:
+        raw_train1 = json.load(f)
+    with open('eidos_training.json') as f:
+        raw_train2 = json.load(f)
     with open('eidos_extra.json') as f:
         raw_train2 = json.load(f)
     rd = defaultdict(int)
@@ -201,12 +199,12 @@ if __name__ == '__main__':
                 datapoint[5] = rules[datapoint[5]]
             except KeyError:
                 pass
-    # random.shuffle(raw_train1)
+    random.shuffle(raw_train1)
     random.shuffle(raw_train2)
-    raw_test  = raw_train2[:100]
+    raw_test  = raw_train1[:300:] + raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    raw_train = raw_train2[100:5100]#raw_train1[300:] + raw_train2[300:15000]
+    raw_train = raw_train1[300:] + raw_train2[300:5300]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
@@ -248,7 +246,7 @@ if __name__ == '__main__':
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
-    classifier_optimizer = optim.Adam(classifier.parameters(), lr=0.001)
+    classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
     decoder_optimizer    = optim.Adam(decoder.parameters(), lr=learning_rate)
 
     for epoch in range(100):
