@@ -6,6 +6,8 @@ import argparse
 from nltk.translate.bleu_score import corpus_bleu
 from collections import defaultdict
 
+EOS_token = 0
+
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
     indexes.append(EOS_token)
@@ -47,9 +49,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
     
-    if gold:
-        classify_output = classifier(cause_vec, effect_vec)
-        loss += criterion1(classify_output, label_tensor)
+    # if gold:
+    #     classify_output = classifier(cause_vec, effect_vec)
+    #     print (label_tensor, classify_output)
+    #     loss += criterion1(classify_output, label_tensor)
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
@@ -87,6 +90,39 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     return loss.item()
 
+def top_skipIds(topis, skids):
+    for id in topis[0]:
+        if id.item() not in skids:
+            return id
+
+def get_topi(decoder_output, rule_lang, id2source, lsb):
+    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    if topis[0][0].item() == EOS_token:
+        # decoded_rule.append('<EOS>')
+        return None, None, None
+    topi = topis[0][0]
+    lsb_id = rule_lang.word2index['[']
+    rsb_id = rule_lang.word2index[']']
+
+    skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    if lsb:
+        skip_ids.appned(lsb_id)
+    else:
+        skip_ids.append(rsb_id)
+
+    topi = top_skipIds(topis, skip_ids)
+
+    if topi.item() == rsb_id:
+        lsb = False
+
+    if topi.item() in rule_lang.index2word:
+        decoded = rule_lang.index2word[topi.item()]
+    elif topi.item() in id2source:
+        decoded = id2source[topi.item()]
+
+    return topi, decoded, lsb
+
+
 def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
     encoder.eval()
     classifier.eval()
@@ -123,22 +159,21 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
                 decoder_hidden = encoder_hidden
                 decoded_rule = []
+
+                lsb = False # left square bracket [
+
                 for di in range(220):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
                             decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
-                    topv, topi = decoder_output.data.topk(1)
-                    if topi.item() == EOS_token:
-                            # decoded_rule.append('<EOS>')
-                            break
-                    else:
-                        if topi.item() in rule_lang.index2word:
-                            decoded_rule.append(rule_lang.index2word[topi.item()])
-                        elif topi.item() in id2source:
-                            decoded_rule.append(id2source[topi.item()])
-                        else:
-                            decoded_rule.append('UNK')
+                    
+                    topi, decoded, lsb = get_topi(decoder_output, rule_lang, id2source, lsb)
 
-                    decoder_input = topi.squeeze().detach()
+                    if topi is not None:
+                        decoded_rule.append(decoded)
+                        decoder_input = topi.squeeze().detach()
+                    else:
+                        break
+
                 gold = True
                 if len(datapoint)>5:
                     if len(datapoint)>6:
@@ -184,12 +219,12 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('LDC_training.json') as f:
-        raw_train1 = json.load(f)
+    # with open('LDC_training.json') as f:
+    #     raw_train1 = json.load(f)[:7000]
     with open('eidos_training.json') as f:
         raw_train2 = json.load(f)
     with open('eidos_extra.json') as f:
-        raw_train2 = json.load(f)
+        raw_train2 = json.load(f)[:7000]
     rd = defaultdict(int)
     temp = list()
     with open("rules_cause.json") as f:
@@ -203,12 +238,12 @@ if __name__ == '__main__':
                 pass
     raw_train2 = temp[:]
     del temp
-    random.shuffle(raw_train1)
+    # random.shuffle(raw_train1)
     random.shuffle(raw_train2)
-    raw_test  = raw_train1[:300:] + raw_train2[:300]
+    raw_test  = raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    raw_train = raw_train1[300:] + raw_train2[300:5300]
+    raw_train = raw_train2[300:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
@@ -243,8 +278,7 @@ if __name__ == '__main__':
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
-    print (rule_lang.n_words)
-    print (rule_lang.word2index)
+    print (json.dumps(rule_lang.word2index))
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
