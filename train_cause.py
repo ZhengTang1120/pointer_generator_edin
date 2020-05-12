@@ -49,10 +49,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
     
-    # if gold:
-    #     classify_output = classifier(cause_vec, effect_vec)
-    #     print (label_tensor, classify_output)
-    #     loss += criterion1(classify_output, label_tensor)
+    if gold:
+        classify_output = classifier(cause_vec, effect_vec)
+        print (label_tensor, classify_output)
+        loss += criterion1(classify_output, label_tensor)
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
