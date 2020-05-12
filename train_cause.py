@@ -219,8 +219,8 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    # with open('LDC_training.json') as f:
-    #     raw_train1 = json.load(f)[:7000]
+    with open('LDC_training.json') as f:
+        raw_train1 = json.load(f)[:7000]
     with open('eidos_training.json') as f:
         raw_train2 = json.load(f)
     with open('eidos_extra.json') as f:
@@ -240,10 +240,10 @@ if __name__ == '__main__':
     del temp
     # random.shuffle(raw_train1)
     random.shuffle(raw_train2)
-    raw_test  = raw_train2[:300]
+    raw_test  = raw_train1[:300]+raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    raw_train = raw_train2[300:]
+    raw_train = raw_train1[300:]+raw_train2[300:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
