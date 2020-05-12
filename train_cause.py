@@ -49,10 +49,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
     
-    # if gold:
-    #     classify_output = classifier(cause_vec, effect_vec)
-    #     print (label_tensor, classify_output)
-    #     loss += criterion1(classify_output, label_tensor)
+    if gold:
+        classify_output = classifier(cause_vec, effect_vec)
+        print (label_tensor, classify_output)
+        loss += criterion1(classify_output, label_tensor)
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
@@ -154,7 +154,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
 
                 encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
-                # classify_output = classifier(cause_vec, effect_vec)
+                classify_output = classifier(cause_vec, effect_vec)
 
                 decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
                 decoder_hidden = encoder_hidden
@@ -210,7 +210,7 @@ def eval_rules(references, candidates):
     # print (len(candidates))
     return c/len(candidates), corpus_bleu(references, candidates)
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
 
     parser = argparse.ArgumentParser()
     parser.add_argument('lr')
@@ -219,8 +219,8 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    # with open('LDC_training.json') as f:
-    #     raw_train1 = json.load(f)[:7000]
+    with open('LDC_training.json') as f:
+        raw_train1 = json.load(f)[:7000]
     with open('eidos_training.json') as f:
         raw_train2 = json.load(f)
     with open('eidos_extra.json') as f:
@@ -240,10 +240,10 @@ if __name__ == '__main__':
     del temp
     # random.shuffle(raw_train1)
     random.shuffle(raw_train2)
-    raw_test  = raw_train2[:300]
+    raw_test  = raw_train1[:300]+raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    raw_train = raw_train2[300:]
+    raw_train = raw_train1[300:]+raw_train2[300:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
