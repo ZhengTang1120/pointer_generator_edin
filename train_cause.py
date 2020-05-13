@@ -195,7 +195,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     if (np.round(classify_output).item()==label):
                         tp += 1
 
-    print (eval_rules(references, candidates))#(tp, p, t, eval_rules(references, candidates))
+    print (tp, p, t, eval_rules(references, candidates))
 
 def eval_rules(references, candidates):
     c = 0.0
