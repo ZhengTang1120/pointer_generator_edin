@@ -138,11 +138,9 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
-            if datapoint[1]=='not_causal':
-                label = 0
-            else:
-                label = 1
-                t+=1
+            if datapoint[1]!='not_causal' and len(datapoint) <= 5:
+                t += 1
+
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, [], datapoint[2])
             pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
 
