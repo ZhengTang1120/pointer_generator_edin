@@ -33,7 +33,7 @@ def makeOutputIndexes(lang, output, input):
             id2source[sourceset[word]] = word
         pg_mat[sourceset[word]-lang.n_words][i] = 1
     indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
-    # indexes.reverse()
+    indexes.reverse()
     # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
 
     indexes.append(EOS_token)
@@ -185,7 +185,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         gold = False
                     rule = datapoint[5]
-                    # decoded_rule.reverse()
+                    decoded_rule.reverse()
                     print (decoded_rule)
                     candidates.append(decoded_rule)
                     print (rule)
