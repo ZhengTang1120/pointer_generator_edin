@@ -33,7 +33,7 @@ def makeOutputIndexes(lang, output, input):
             id2source[sourceset[word]] = word
         pg_mat[sourceset[word]-lang.n_words][i] = 1
     indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
-    indexes.reverse()
+    # indexes.reverse()
     # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
 
     indexes.append(EOS_token)
@@ -88,6 +88,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:
                     break
+    print (loss)
     loss.backward()
 
     encoder_optimizer.step()
@@ -185,7 +186,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         gold = False
                     rule = datapoint[5]
-                    decoded_rule.reverse()
+                    # decoded_rule.reverse()
                     print (decoded_rule)
                     candidates.append(decoded_rule)
                     print (rule)
@@ -316,8 +317,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_mr2")
-        PATH = "model_cause_mr2"
+        os.mkdir("model_cause_m2")
+        PATH = "model_cause_m2"
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
