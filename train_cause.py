@@ -95,6 +95,13 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     classifier_optimizer.step()
     decoder_optimizer.step()
 
+    for param in encoder.parameters():
+        print(param.data)
+    for param in classifier.parameters():
+        print(param.data)
+    for param in decoder.parameters():
+        print(param.data)
+
     return loss.item()
 
 def top_skipIds(topis, skids):
