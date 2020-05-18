@@ -8,6 +8,13 @@ from collections import defaultdict
 
 EOS_token = 0
 
+# def check_dp(pattern):
+#     udp_list = ["acl", "advcl", "advmod", "amod", "appos", "aux", "case", "cc", "ccomp", "clf", "compound", "conj", "cop", "csubj", "dep", "det", "discourse", "dislocated", "expl", "fixed", "flat", "goeswith", "iobj", "list", "mark", "nmod", "nsubj", "nummod", "obj", "obl", "orphan", "parataxis", "punct", "reparandum", "root", "vocative", "xcomp"]
+#     for dp in udp_list:
+#         if dp in pattern:
+#             return True
+#     return False
+
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
     indexes.append(EOS_token)
@@ -26,7 +33,7 @@ def makeOutputIndexes(lang, output, input):
             id2source[sourceset[word]] = word
         pg_mat[sourceset[word]-lang.n_words][i] = 1
     indexes = [sourceset[word] if word in sourceset else lang.word2index[word] for word in output]
-    indexes.reverse()
+    # indexes.reverse()
     # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
 
     indexes.append(EOS_token)
@@ -178,7 +185,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         gold = False
                     rule = datapoint[5]
-                    decoded_rule.reverse()
+                    # decoded_rule.reverse()
                     print (decoded_rule)
                     candidates.append(decoded_rule)
                     print (rule)
@@ -236,7 +243,7 @@ if __name__ == '__main__':
                 pass
     raw_train2 = temp[:]
     del temp
-    # random.shuffle(raw_train1)
+    random.shuffle(raw_train1)
     random.shuffle(raw_train2)
     raw_test  = raw_train1[:300]+raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
@@ -276,7 +283,16 @@ if __name__ == '__main__':
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
-    print (json.dumps(rule_lang.word2index))
+    # dp_pattern = list()
+    # w_pattern  = list()
+    # ot_pattern = list()
+    # for pattern in rule_lang.word2index:
+    #     if check_dp(pattern):
+    #         dp_pattern.append([pattern, rule_lang.word2index[pattern]])
+    #     elif pattern.isalnum() and pattern.lower() == pattern and pattern not in ['word', 'lemma', 'tag']:
+    #         w_pattern.append([pattern, rule_lang.word2index[pattern]])
+    #     else:
+    #         ot_pattern.append([pattern, rule_lang.word2index[pattern]])
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
