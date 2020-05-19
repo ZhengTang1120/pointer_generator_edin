@@ -150,6 +150,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
     t = 0.0
     p = 0.0
     tp = 0.0
+    pp = 0.0
 
     references = []
     candidates = []
@@ -208,13 +209,14 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
                 # print ()
-
+                if np.round(classify_output).item() == 1:
+                    pp += 1
                 if gold and np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
 
-    print (tp, p, t, eval_rules(references, candidates))
+    print (tp, p, pp, t, eval_rules(references, candidates))
 
 def eval_rules(references, candidates):
     c = 0.0
