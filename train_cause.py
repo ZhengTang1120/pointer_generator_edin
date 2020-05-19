@@ -296,9 +296,6 @@ if __name__ == '__main__':
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
     
-    for data in trainning_set:
-        print (data[1], data[5])
-    exit()
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
