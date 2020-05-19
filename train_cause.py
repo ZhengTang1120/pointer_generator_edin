@@ -357,8 +357,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_m2")
-        PATH = "model_cause_m2"
+        os.mkdir("model_cause_m3")
+        PATH = "model_cause_m3"
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
