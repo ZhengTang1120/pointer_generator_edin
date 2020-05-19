@@ -47,10 +47,11 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     encoder.train()
     classifier.train()
-    decoder.train()
+    # decoder.train()
 
     encoder_optimizer.zero_grad()
     classifier_optimizer.zero_grad()
+    # decoder_optimizer.zero_grad()
 
     loss = 0
 
