@@ -89,7 +89,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     #             loss += criterion2(decoder_output, rule_tensor[di])
     #             if decoder_input.item() == EOS_token:
     #                 break
-    print (loss)
+    # print (loss)
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
@@ -101,10 +101,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     classifier_optimizer.step()
     # decoder_optimizer.step()
 
-    for param in encoder.parameters():
-        print(param.data)
-    for param in classifier.parameters():
-        print(param.data)
+    # for param in encoder.parameters():
+    #     print(param.data)
+    # for param in classifier.parameters():
+    #     print(param.data)
     # for param in decoder.parameters():
     #     print(param.data)
 
@@ -162,6 +162,11 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
             input_tensor   = tensorFromIndexes(input)
             if datapoint[1]!='not_causal' and len(datapoint) <= 5:
                 t += 1
+                
+            if datapoint[1] == 'not_causal':
+                label = 0
+            else:
+                label = 1
 
             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, [], datapoint[2])
             pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
@@ -210,6 +215,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
                 # print ()
+                print (np.round(classify_output).item(), label)
                 if np.round(classify_output).item() == 1:
                     pp += 1
                 if gold and np.round(classify_output).item() == 1:
@@ -242,25 +248,25 @@ if __name__ == '__main__':
     trainning_set = list()
     with open('LDC_training.json') as f:
         raw_train1 = json.load(f)[:7000]
-    with open('eidos_training.json') as f:
-        raw_train2 = json.load(f)
-    with open('eidos_extra.json') as f:
-        raw_train2 = json.load(f)[:7000]
-    rd = defaultdict(int)
-    temp = list()
-    with open("rules_cause.json") as f:
-        rules = json.load(f)
-        for datapoint in raw_train2:
-            try:
-                rd[datapoint[5]] = len(rules[datapoint[5]])
-                datapoint[5] = rules[datapoint[5]]
-                temp.append(datapoint)
-            except KeyError:
-                pass
-    raw_train2 = temp[:]
-    del temp
+    # with open('eidos_training.json') as f:
+    #     raw_train2 = json.load(f)
+    # with open('eidos_extra.json') as f:
+    #     raw_train2 = json.load(f)[:7000]
+    # rd = defaultdict(int)
+    # temp = list()
+    # with open("rules_cause.json") as f:
+    #     rules = json.load(f)
+    #     for datapoint in raw_train2:
+    #         try:
+    #             rd[datapoint[5]] = len(rules[datapoint[5]])
+    #             datapoint[5] = rules[datapoint[5]]
+    #             temp.append(datapoint)
+    #         except KeyError:
+    #             pass
+    # raw_train2 = temp[:]
+    # del temp
     random.shuffle(raw_train1)
-    random.shuffle(raw_train2)
+    # random.shuffle(raw_train2)
     raw_test  = raw_train1[:300]#+raw_train2[:300]
     # with open('test_%s.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
