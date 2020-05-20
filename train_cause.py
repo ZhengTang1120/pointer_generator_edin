@@ -7,13 +7,16 @@ from nltk.translate.bleu_score import corpus_bleu
 from collections import defaultdict
 
 EOS_token = 0
+dp_pattern = list()
+w_pattern  = list()
+ot_pattern = list()
 
-# def check_dp(pattern):
-#     udp_list = ["acl", "advcl", "advmod", "amod", "appos", "aux", "case", "cc", "ccomp", "clf", "compound", "conj", "cop", "csubj", "dep", "det", "discourse", "dislocated", "expl", "fixed", "flat", "goeswith", "iobj", "list", "mark", "nmod", "nsubj", "nummod", "obj", "obl", "orphan", "parataxis", "punct", "reparandum", "root", "vocative", "xcomp"]
-#     for dp in udp_list:
-#         if dp in pattern:
-#             return True
-#     return False
+def check_dp(pattern):
+    udp_list = ["rcmod", "xsubj", "acl", "advcl", "advmod", "amod", "appos", "aux", "case", "cc", "ccomp", "clf", "compound", "conj", "cop", "csubj", "dep", "det", "discourse", "dislocated", "expl", "fixed", "flat", "goeswith", "iobj", "list", "mark", "nmod", "nsubj", "nummod", "obj", "obl", "orphan", "parataxis", "punct", "reparandum", "root", "vocative", "xcomp"]
+    for dp in udp_list:
+        if dp in pattern:
+            return True
+    return False
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
@@ -80,15 +83,21 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
                 decoder_input = rule_tensor[di]  # Teacher forcing
 
         else:
+            lsb  = False # left square bracket [
+            part = 'trigger' # rule start with trigger
+            prev = None
             # Without teacher forcing: use its own predictions as the next input
             for di in range(rule_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(
                     decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
-                topv, topi = decoder_output.topk(1)
+                topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
+
+                # topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:
                     break
+    print (loss)
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
@@ -100,7 +109,6 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     classifier_optimizer.step()
     decoder_optimizer.step()
 
-
     return loss.item()
 
 def top_skipIds(topis, skids):
@@ -108,32 +116,53 @@ def top_skipIds(topis, skids):
         if id.item() not in skids:
             return id
 
-def get_topi(decoder_output, rule_lang, id2source, lsb):
+def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     topvs, topis = decoder_output.data.topk(decoder_output.size(1))
     if topis[0][0].item() == EOS_token:
         # decoded_rule.append('<EOS>')
-        return None, None, None
+        return topis[0][0], None, None, part
     topi = topis[0][0]
     lsb_id = rule_lang.word2index['[']
     rsb_id = rule_lang.word2index[']']
+    l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
+    c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
+    eq_id  = rule_lang.word2index['=']
 
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    dps      = dp_pattern
+    words    = w_pattern
+
+    for p in id2source:
+        if check_dp(id2source[p]):
+            dps.append(p)
+        else:
+            words.append(p)
+    
     if lsb:
         skip_ids.appned(lsb_id)
     else:
         skip_ids.append(rsb_id)
 
+    if part == 'word/lemma':
+        skip_ids += dps
+    elif part == 'effect/cause':
+        skip_ids += words
+
     topi = top_skipIds(topis, skip_ids)
 
     if topi.item() == rsb_id:
         lsb = False
+    if topi.item() == eq_id and  prev in c_e_id :
+        part = 'cause/effect'
+    if topi.item() in l_w_id:
+        part = 'word/lemma'
 
     if topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
     elif topi.item() in id2source:
         decoded = id2source[topi.item()]
 
-    return topi, decoded, lsb
+    return topi, decoded, lsb, part
 
 
 def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
@@ -144,7 +173,6 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
     t = 0.0
     p = 0.0
     tp = 0.0
-    pp = 0.0
 
     references = []
     candidates = []
@@ -176,16 +204,19 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 decoder_hidden = encoder_hidden
                 decoded_rule = []
 
-                lsb = False # left square bracket [
+                lsb  = False # left square bracket [
+                part = 'trigger' # rule start with trigger
+                prev = None
 
                 for di in range(220):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
                             decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
                     
-                    topi, decoded, lsb = get_topi(decoder_output, rule_lang, id2source, lsb)
+                    topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
 
-                    if topi is not None:
+                    if decoded is not None:
                         decoded_rule.append(decoded)
+                        prev = decoded
                         decoder_input = topi.squeeze().detach()
                     else:
                         break
@@ -198,23 +229,19 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
-                    print (decoded_rule)
                     candidates.append(decoded_rule)
-                    print (rule)
                     references.append([rule])
-                    print ()
                 
                 # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
                 # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
                 # print ()
-                if np.round(classify_output).item() == 1:
-                    pp += 1
+
                 if gold and np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
 
-    print ('result ', tp, p, pp, t, eval_rules(references, candidates))
+    print ('result', tp, p, t, eval_rules(references, candidates))
 
 def eval_rules(references, candidates):
     c = 0.0
@@ -254,6 +281,7 @@ if __name__ == '__main__':
                 temp.append(datapoint)
             except KeyError:
                 pass
+
     raw_train2 = temp[:]
     del temp
     random.shuffle(raw_train1)
@@ -266,6 +294,13 @@ if __name__ == '__main__':
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
             rule_lang.addSentence(datapoint[5])
+    for pattern in rule_lang.word2index:
+        if check_dp(pattern):
+            dp_pattern.append(rule_lang.word2index[pattern])
+        elif pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']:
+            w_pattern.append(rule_lang.word2index[pattern])
+        else:
+            ot_pattern.append(rule_lang.word2index[pattern])
 
     for datapoint in raw_train:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
@@ -293,11 +328,10 @@ if __name__ == '__main__':
 
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
-    
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
-
+    
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
@@ -321,8 +355,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_m3/%d"%epoch)
-        PATH = "model_cause_m3/%d"%epoch
+        os.mkdir("model_cause_m5/%d"%epoch)
+        PATH = "model_cause_m5/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
