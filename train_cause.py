@@ -214,7 +214,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     if (np.round(classify_output).item()==label):
                         tp += 1
 
-    print (tp, p, pp, t, eval_rules(references, candidates))
+    print ('result ', tp, p, pp, t, eval_rules(references, candidates))
 
 def eval_rules(references, candidates):
     c = 0.0
@@ -321,8 +321,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_m/%d"%epoch)
-        PATH = "model_cause_m/%d"%epoch
+        os.mkdir("model_cause_m3/%d"%epoch)
+        PATH = "model_cause_m3/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
