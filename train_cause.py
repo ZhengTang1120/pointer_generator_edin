@@ -146,7 +146,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb):
 def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
     encoder.eval()
     classifier.eval()
-    decoder.eval()
+    # decoder.eval()
 
     t = 0.0
     p = 0.0
