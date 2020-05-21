@@ -97,6 +97,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('lr')
+    parser.add_argument('chunk')
     args = parser.parse_args()
 
     input_lang = Lang("input")
@@ -145,22 +146,21 @@ if __name__ == '__main__':
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
 
-    for j, c in enumerate(chunks):
-        print (j)
-        trainning_set = list()
-        for chunk in chunks[:j] + chunks[j+1:]:
-            trainning_set += chunk
-        dev_set = c
-        for epoch in range(10):
-            print(epoch)
-            random.shuffle(trainning_set)
-            total_loss = 0
-            for i, data in enumerate(trainning_set):
-                loss = train(data[0], data[1], data[2], data[3],
-                         data[4], data[5],
-                         encoder, classifier, None, encoder_optimizer, 
-                         classifier_optimizer, None)
-                total_loss += loss
+    j = args.chunk
+    trainning_set = list()
+    for chunk in chunks[:j] + chunks[j+1:]:
+        trainning_set += chunk
+    dev_set = c
+    for epoch in range(5):
+        print(epoch)
+        random.shuffle(trainning_set)
+        total_loss = 0
+        for i, data in enumerate(trainning_set):
+            loss = train(data[0], data[1], data[2], data[3],
+                     data[4], data[5],
+                     encoder, classifier, None, encoder_optimizer, 
+                     classifier_optimizer, None)
+            total_loss += loss
 
-            evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
-        print ()
+        evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
+    print ()
