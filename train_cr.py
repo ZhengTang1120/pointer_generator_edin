@@ -103,6 +103,8 @@ if __name__ == '__main__':
     trainning_set = list()
     with open('LDC_training.json') as f:
         raw_train = json.load(f)[:7000]
+    for datapoint in raw_train:
+        input_lang.addSentence(datapoint[2])
     random.shuffle(raw_train)
 
     for datapoint in raw_train:
@@ -131,9 +133,7 @@ if __name__ == '__main__':
 
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
-
     chunks = [trainning_set[i:i + 700] for i in range(0, len(trainning_set), 700)]
-
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
@@ -146,13 +146,14 @@ if __name__ == '__main__':
 
     for epoch in range(100):
 
-        for i, c in enumerate(chunks):
-            trainning_set = chunks[:i] + chunks[i+1:]
+        for j, c in enumerate(chunks):
+            trainning_set = list()
+            for chunk in chunks[:j] + chunks[j+1:]:
+                trainning_set += chunk
             dev_set = c
             random.shuffle(trainning_set)
             total_loss = 0
             for i, data in enumerate(trainning_set):
-
                 loss = train(data[0], data[1], data[2], data[3],
                          data[4], data[5],
                          encoder, classifier, None, encoder_optimizer, 
