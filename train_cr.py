@@ -160,4 +160,4 @@ if __name__ == '__main__':
                          classifier_optimizer, None)
                 total_loss += loss
 
-            evaluate(encoder, classifier, decoder, dev_set, input_lang, rule_lang)
+            evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
