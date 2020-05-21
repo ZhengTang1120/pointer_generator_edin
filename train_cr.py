@@ -145,13 +145,14 @@ if __name__ == '__main__':
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
 
-    for epoch in range(100):
-
-        for j, c in enumerate(chunks):
-            trainning_set = list()
-            for chunk in chunks[:j] + chunks[j+1:]:
-                trainning_set += chunk
-            dev_set = c
+    for j, c in enumerate(chunks):
+        print (j)
+        trainning_set = list()
+        for chunk in chunks[:j] + chunks[j+1:]:
+            trainning_set += chunk
+        dev_set = c
+        for epoch in range(10):
+            print(epoch)
             random.shuffle(trainning_set)
             total_loss = 0
             for i, data in enumerate(trainning_set):
