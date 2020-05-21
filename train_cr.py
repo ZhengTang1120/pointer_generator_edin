@@ -162,3 +162,4 @@ if __name__ == '__main__':
                 total_loss += loss
 
             evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
+        print ()
