@@ -146,7 +146,7 @@ if __name__ == '__main__':
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
 
-    j = args.chunk
+    j = int(args.chunk)
     trainning_set = list()
     for chunk in chunks[:j] + chunks[j+1:]:
         trainning_set += chunk
