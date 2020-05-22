@@ -150,7 +150,7 @@ if __name__ == '__main__':
     trainning_set = list()
     for chunk in chunks[:j] + chunks[j+1:]:
         trainning_set += chunk
-    dev_set = c
+    dev_set = chunks[j]
     for epoch in range(5):
         print(epoch)
         random.shuffle(trainning_set)
