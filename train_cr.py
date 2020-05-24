@@ -90,8 +90,12 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
             p += 1
             if (np.round(classify_output).item()==label):
                 tp += 1
-
-    print ('result', tp, p, t)
+    
+    precision = tp/p
+    recall    = tp/t
+    f1        = 2 * precision * recall / (precision + recall)
+    print ('result', precision, recall, f1) 
+    return f1
 
 if __name__ == '__main__': 
 
@@ -148,10 +152,13 @@ if __name__ == '__main__':
 
     j = int(args.chunk)
     trainning_set = list()
-    for chunk in chunks[:j] + chunks[j+1:]:
+    for chunk in chunks[:j] + chunks[j+2:]:
         trainning_set += chunk
-    dev_set = chunks[j]
-    for epoch in range(5):
+    dev_set  = chunks[j]
+    test_set = chunks[j+1]
+    best = 0
+    bf   = 0
+    for epoch in range(10):
         print(epoch)
         random.shuffle(trainning_set)
         total_loss = 0
@@ -161,6 +168,12 @@ if __name__ == '__main__':
                      encoder, classifier, None, encoder_optimizer, 
                      classifier_optimizer, None)
             total_loss += loss
-
-        evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
-    print ()
+        
+        f1 = evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
+        
+        if bf < f1:
+              best = epoch
+              bf   = f1   
+              print ('test_f1')
+              test_f1 = evaluate(encoder, classifier, None, test_set, input_lang, rule_lang) 
+              print ('test_f1')    
