@@ -259,7 +259,7 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('e.json') as f:
+    with open('LDC_training.json') as f:
         raw_train1 = json.load(f)[:7000]
     with open('eidos_training.json') as f:
         raw_train2 = json.load(f)
