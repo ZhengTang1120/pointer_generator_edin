@@ -259,7 +259,7 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('LDC_training.json') as f:
+    with open('e.json') as f:
         raw_train1 = json.load(f)[:7000]
     with open('eidos_training.json') as f:
         raw_train2 = json.load(f)
@@ -328,6 +328,10 @@ if __name__ == '__main__':
     encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
     classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
+
+    encoder.cuda()
+    Classifier.cuda()
+    decoder.cuda()
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
