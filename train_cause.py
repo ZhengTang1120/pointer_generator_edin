@@ -233,10 +233,6 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     candidates.append(decoded_rule)
                     references.append([rule])
                 
-                # print (cw, datapoint[2][cause_pos[0]:cause_pos[-1]+1])
-                # print (ew, datapoint[2][effect_pos[0]:effect_pos[-1]+1])
-                # print ()
-
                 if gold and np.round(classify_output).item() == 1:
                     p += 1
                     if (np.round(classify_output).item()==label):
@@ -253,7 +249,6 @@ def eval_rules(references, candidates):
             print ("cand", r)
             print ("ref ", references[i][0])
             print ()
-    # print (len(candidates))
     return c/len(candidates), corpus_bleu(references, candidates)
 
 if __name__ == '__main__': 
