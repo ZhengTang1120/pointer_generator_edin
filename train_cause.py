@@ -198,7 +198,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
                 encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
                 classify_output = classifier(cause_vec, effect_vec)
-                classify_output = classify_output.detach()
+                classify_output = classify_output.detach().cpu()
 
                 decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
                 decoder_hidden = encoder_hidden
