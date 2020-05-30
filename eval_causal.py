@@ -52,8 +52,10 @@ if __name__ == '__main__':
     PATH = "model_cause_m3/%d"%int(epoch)
     encoder = torch.load(PATH+"/encoder")
     classifier = torch.load(PATH+"/classifier")
+    decoder = torch.load(PATH+'/decoder')
 
     encoder.eval()
     classifier.eval()
+    decoder.eval()
 
     evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
