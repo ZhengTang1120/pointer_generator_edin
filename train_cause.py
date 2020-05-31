@@ -337,9 +337,9 @@ if __name__ == '__main__':
     classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
     decoder    = AttnDecoderRNN(hidden_size, rule_lang.n_words, dropout_p=0.1).to(device)
 
-    encoder.cuda()
-    classifier.cuda()
-    decoder.cuda()
+    # encoder.cuda()
+    # classifier.cuda()
+    # decoder.cuda()
 
     encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
     classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
