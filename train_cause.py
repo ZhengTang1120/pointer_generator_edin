@@ -5,6 +5,7 @@ import os
 import argparse
 from nltk.translate.bleu_score import corpus_bleu
 from collections import defaultdict
+import pickle
 
 EOS_token = 0
 dp_pattern = list()
@@ -116,50 +117,54 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    if topis[0][0].item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topis[0][0], None, None, part
-    topi = topis[0][0]
-    lsb_id = rule_lang.word2index['[']
-    rsb_id = rule_lang.word2index[']']
-    l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
-    c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
-    eq_id  = rule_lang.word2index['=']
+    # topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    # if topis[0][0].item() == EOS_token:
+    #     # decoded_rule.append('<EOS>')
+    #     return topis[0][0], None, None, part
+    # topi = topis[0][0]
+    # lsb_id = rule_lang.word2index['[']
+    # rsb_id = rule_lang.word2index[']']
+    # l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
+    # c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
+    # eq_id  = rule_lang.word2index['=']
 
-    skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    dps      = dp_pattern
-    words    = w_pattern
+    # skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    # dps      = dp_pattern
+    # words    = w_pattern
 
-    for p in id2source:
-        if check_dp(id2source[p]):
-            dps.append(p)
-        else:
-            words.append(p)
+    # for p in id2source:
+    #     if check_dp(id2source[p]):
+    #         dps.append(p)
+    #     else:
+    #         words.append(p)
     
-    if lsb:
-        skip_ids.appned(lsb_id)
-    else:
-        skip_ids.append(rsb_id)
+    # if lsb:
+    #     skip_ids.appned(lsb_id)
+    # else:
+    #     skip_ids.append(rsb_id)
 
-    if part == 'word/lemma':
-        skip_ids += dps
-    elif part == 'effect/cause':
-        skip_ids += words
+    # if part == 'word/lemma':
+    #     skip_ids += dps
+    # elif part == 'effect/cause':
+    #     skip_ids += words
 
-    topi = top_skipIds(topis, skip_ids)
+    # topi = top_skipIds(topis, skip_ids)
 
-    if topi.item() == rsb_id:
-        lsb = False
-    if topi.item() == eq_id and  prev in c_e_id :
-        part = 'cause/effect'
-    if topi.item() in l_w_id:
-        part = 'word/lemma'
+    # if topi.item() == rsb_id:
+    #     lsb = False
+    # if topi.item() == eq_id and  prev in c_e_id :
+    #     part = 'cause/effect'
+    # if topi.item() in l_w_id:
+    #     part = 'word/lemma'
+
+    topv, topi = decoder_output.topk(1)
 
     if topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
     elif topi.item() in id2source:
         decoded = id2source[topi.item()]
+    else:
+        decoded_rule.append('UNK')
 
     return topi, decoded, lsb, part
 
@@ -294,6 +299,9 @@ if __name__ == '__main__':
             w_pattern.append(rule_lang.word2index[pattern])
         else:
             ot_pattern.append(rule_lang.word2index[pattern])
+    
+    with open("lang.pickle", "wb") as f:
+        pickle.dump((input_lang, rule_lang, raw_test), f)
 
     for datapoint in raw_train:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
