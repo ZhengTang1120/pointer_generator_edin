@@ -159,13 +159,13 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
 
     topv, topi = decoder_output.topk(1)
 
-    if topi.item() in rule_lang.index2word:
+    if topi.item() == EOS_token:
+        # decoded_rule.append('<EOS>')
+        return topi, None, None, part
+    elif topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
     elif topi.item() in id2source:
         decoded = id2source[topi.item()]
-    elif topi.item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topi, None, None, part
     else:
         decoded = 'UNK'
         # decoded_rule.append('UNK')
