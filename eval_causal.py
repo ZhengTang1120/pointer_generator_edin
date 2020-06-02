@@ -49,7 +49,7 @@ if __name__ == '__main__':
     #     f.write(json.dumps(raw_test))
 
     epoch = 5
-    PATH = "model_cause_m3/%d"%int(epoch)
+    PATH = "model_cause/%d"%int(epoch)
     encoder = torch.load(PATH+"/encoder")
     classifier = torch.load(PATH+"/classifier")
     decoder = torch.load(PATH+'/decoder')
