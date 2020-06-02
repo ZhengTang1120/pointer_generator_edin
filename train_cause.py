@@ -117,10 +117,10 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    if topis[0][0].item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topis[0][0], None, None, part
+    # topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    # if topis[0][0].item() == EOS_token:
+    #     # decoded_rule.append('<EOS>')
+    #     return topis[0][0], None, None, part
     # topi = topis[0][0]
     # lsb_id = rule_lang.word2index['[']
     # rsb_id = rule_lang.word2index[']']
@@ -128,7 +128,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     # c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
     # eq_id  = rule_lang.word2index['=']
 
-    # skip_ids = [prev] + list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    # skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     # dps      = dp_pattern
     # words    = w_pattern
 
