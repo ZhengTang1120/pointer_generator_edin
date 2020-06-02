@@ -158,6 +158,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         part = 'word/lemma'
 
     topv, topi = decoder_output.topk(1)
+    print (prev, topi.item())
 
     if topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
