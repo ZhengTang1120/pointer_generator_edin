@@ -270,7 +270,7 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    
+
     with open('train.json') as f:
         raw_train = json.load(f)
     with open('test.json') as f:
@@ -348,8 +348,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause/%d"%epoch)
-        PATH = "model_cause/%d"%epoch
+        os.mkdir("model_cause_new/%d"%epoch)
+        PATH = "model_cause_new/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
