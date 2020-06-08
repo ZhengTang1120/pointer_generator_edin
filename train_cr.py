@@ -99,81 +99,103 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
 if __name__ == '__main__': 
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('lr')
-    parser.add_argument('chunk')
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('lr')
+    # parser.add_argument('chunk')
+    # args = parser.parse_args()
 
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('LDC_training.json') as f:
-        raw_train = json.load(f)[:7000]
-    for datapoint in raw_train:
-        input_lang.addSentence(datapoint[2])
-    random.shuffle(raw_train)
-
+    with open('train.json') as f:
+        raw_train = json.load(f)
+    with open('test.json') as f:
+        raw_test = json.load(f)
+    d = defaultdict(int)
+    d1 = defaultdict(int)
+    d2 = defaultdict(int)
+    d3 = defaultdict(int)
+    c = 0
     for datapoint in raw_train:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
-            input = makeIndexes(input_lang, datapoint[2])
-            input_tensor   = tensorFromIndexes(input)
-            if len(datapoint) > 5 and datapoint[5]:
-                rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, datapoint[5], datapoint[2])
-                pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
-                rule_tensor = tensorFromIndexes(rule_ids)
-                rule = [rule_tensor, pg_mat, id2source]
-                if len(datapoint)>6:
-                    gold = datapoint[6]
-                else:
-                    gold = False
-            else:
-                rule = []
-                gold = True
+            sent   = str(datapoint[2])
+            cause  = str(datapoint[3])
+            effect = str(datapoint[4])
+            c += 1
+            d[sent]              += 1
+            d1[sent+cause]        += 1
+            d2[sent+effect]       += 1
+            d3[sent+cause+effect] += 1
+    i = 0
+    for datapoint in raw_test:
+        if str(datapoint[2]) in d:
+            i += 1
+    print (i, len(raw_test))
+    # for datapoint in raw_train:
+    #     input_lang.addSentence(datapoint[2])
+    # random.shuffle(raw_train)
 
-            if datapoint[1] == 'not_causal':
-                label = 0
-            else:
-                label = 1
+    # for datapoint in raw_train:
+    #     if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+    #         input = makeIndexes(input_lang, datapoint[2])
+    #         input_tensor   = tensorFromIndexes(input)
+    #         if len(datapoint) > 5 and datapoint[5]:
+    #             rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, datapoint[5], datapoint[2])
+    #             pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
+    #             rule_tensor = tensorFromIndexes(rule_ids)
+    #             rule = [rule_tensor, pg_mat, id2source]
+    #             if len(datapoint)>6:
+    #                 gold = datapoint[6]
+    #             else:
+    #                 gold = False
+    #         else:
+    #             rule = []
+    #             gold = True
 
-            temp = datapoint[5] if len(datapoint)>5 else []
+    #         if datapoint[1] == 'not_causal':
+    #             label = 0
+    #         else:
+    #             label = 1
 
-            label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
-    chunks = [trainning_set[i:i + 700] for i in range(0, len(trainning_set), 700)]
-    embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
-    learning_rate = float(args.lr)
-    hidden_size = 100
+    #         temp = datapoint[5] if len(datapoint)>5 else []
+
+    #         label_tensor = torch.tensor([label], dtype=torch.float, device=device)
+    #         trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
+    # chunks = [trainning_set[i:i + 700] for i in range(0, len(trainning_set), 700)]
+    # embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
+    # learning_rate = float(args.lr)
+    # hidden_size = 100
     
-    encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
-    classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
+    # encoder    = EncoderRNN(input_lang.n_words, hidden_size, embeds).to(device)
+    # classifier = Classifier(4 * hidden_size, hidden_size, 1).to(device)
 
-    encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
-    classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
+    # encoder_optimizer    = optim.Adam(encoder.parameters(), lr=learning_rate)
+    # classifier_optimizer = optim.Adam(classifier.parameters(), lr=learning_rate)
 
-    j = int(args.chunk)
-    trainning_set = list()
-    for chunk in chunks[:j] + chunks[j+2:]:
-        trainning_set += chunk
-    dev_set  = chunks[j]
-    test_set = chunks[j+1]
-    best = 0
-    bf   = 0
-    for epoch in range(10):
-        print(epoch)
-        random.shuffle(trainning_set)
-        total_loss = 0
-        for i, data in enumerate(trainning_set):
-            loss = train(data[0], data[1], data[2], data[3],
-                     data[4], data[5],
-                     encoder, classifier, None, encoder_optimizer, 
-                     classifier_optimizer, None)
-            total_loss += loss
+    # j = int(args.chunk)
+    # trainning_set = list()
+    # for chunk in chunks[:j] + chunks[j+2:]:
+    #     trainning_set += chunk
+    # dev_set  = chunks[j]
+    # test_set = chunks[j+1]
+    # best = 0
+    # bf   = 0
+    # for epoch in range(10):
+    #     print(epoch)
+    #     random.shuffle(trainning_set)
+    #     total_loss = 0
+    #     for i, data in enumerate(trainning_set):
+    #         loss = train(data[0], data[1], data[2], data[3],
+    #                  data[4], data[5],
+    #                  encoder, classifier, None, encoder_optimizer, 
+    #                  classifier_optimizer, None)
+    #         total_loss += loss
         
-        f1 = evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
+    #     f1 = evaluate(encoder, classifier, None, dev_set, input_lang, rule_lang)
         
-        if bf < f1:
-              best = epoch
-              bf   = f1   
-              print ('test_f1')
-              test_f1 = evaluate(encoder, classifier, None, test_set, input_lang, rule_lang) 
-              print ('test_f1')    
+    #     if bf < f1:
+    #           best = epoch
+    #           bf   = f1   
+    #           print ('test_f1')
+    #           test_f1 = evaluate(encoder, classifier, None, test_set, input_lang, rule_lang) 
+    #           print ('test_f1')    

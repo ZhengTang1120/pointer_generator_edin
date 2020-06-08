@@ -117,45 +117,45 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    # topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    # if topis[0][0].item() == EOS_token:
-    #     # decoded_rule.append('<EOS>')
-    #     return topis[0][0], None, None, part
-    # topi = topis[0][0]
-    # lsb_id = rule_lang.word2index['[']
-    # rsb_id = rule_lang.word2index[']']
-    # l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
-    # c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
-    # eq_id  = rule_lang.word2index['=']
+    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    if topis[0][0].item() == EOS_token:
+        # decoded_rule.append('<EOS>')
+        return topis[0][0], None, None, part
+    topi = topis[0][0]
+    lsb_id = rule_lang.word2index['[']
+    rsb_id = rule_lang.word2index[']']
+    l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
+    c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
+    eq_id  = rule_lang.word2index['=']
 
-    # skip_ids = [prev] + list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    # dps      = dp_pattern
-    # words    = w_pattern
+    skip_ids = [prev] + list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    dps      = dp_pattern
+    words    = w_pattern
 
-    # for p in id2source:
-    #     if check_dp(id2source[p]):
-    #         dps.append(p)
-    #     else:
-    #         words.append(p)
+    for p in id2source:
+        if check_dp(id2source[p]):
+            dps.append(p)
+        else:
+            words.append(p)
     
-    # if lsb:
-    #     skip_ids.appned(lsb_id)
-    # else:
-    #     skip_ids.append(rsb_id)
+    if lsb:
+        skip_ids.append(lsb_id)
+    else:
+        skip_ids.append(rsb_id)
 
-    # if part == 'word/lemma':
-    #     skip_ids += dps
-    # elif part == 'effect/cause':
-    #     skip_ids += words
+    if part == 'word/lemma':
+        skip_ids += dps
+    elif part == 'effect/cause':
+        skip_ids += words
 
-    # topi = top_skipIds(topis, skip_ids)
+    topi = top_skipIds(topis, skip_ids)
 
-    # if topi.item() == rsb_id:
-    #     lsb = False
-    # if topi.item() == eq_id and  prev in c_e_id :
-    #     part = 'cause/effect'
-    # if topi.item() in l_w_id:
-    #     part = 'word/lemma'
+    if topi.item() == rsb_id:
+        lsb = False
+    if topi.item() == eq_id and  prev in c_e_id :
+        part = 'cause/effect'
+    if topi.item() == eq_id and  prev in l_w_id:
+        part = 'word/lemma'
 
     topv, topi = decoder_output.topk(1)
 
@@ -270,30 +270,12 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('LDC_training.json') as f:
-        raw_train1 = json.load(f)[:7000]
-    with open('eidos_training.json') as f:
-        raw_train2 = json.load(f)
-    with open('eidos_extra.json') as f:
-        raw_train2 = json.load(f)[:7000]
-    rd = defaultdict(int)
-    temp = list()
-    with open("rules_cause.json") as f:
-        rules = json.load(f)
-        for datapoint in raw_train2:
-            try:
-                rd[datapoint[5]] = len(rules[datapoint[5]])
-                datapoint[5] = rules[datapoint[5]]
-                temp.append(datapoint)
-            except KeyError:
-                pass
+    
+    with open('train.json') as f:
+        raw_train = json.load(f)
+    with open('test.json') as f:
+        raw_test = json.load(f)
 
-    raw_train2 = temp[:]
-    del temp
-    random.shuffle(raw_train1)
-    random.shuffle(raw_train2)
-    raw_test  = raw_train1[:300]+raw_train2[:300]
-    raw_train = raw_train1[300:]+raw_train2[300:]
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
         if len(datapoint) > 5 and datapoint[5]:
