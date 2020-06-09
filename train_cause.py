@@ -165,7 +165,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     elif topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
     elif topi.item() in id2source:
-        decoded = id2source[topi.item()]
+        decoded = id2source[topi.item()]+'_from_source'
     else:
         decoded = 'UNK'
         # decoded_rule.append('UNK')
@@ -237,7 +237,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
-                    # decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
+                    decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
                     references.append([rule])
                 
