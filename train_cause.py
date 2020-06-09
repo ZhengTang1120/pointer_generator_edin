@@ -117,55 +117,55 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    if topis[0][0].item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topis[0][0], None, None, part
-    topi = topis[0][0]
-    lsb_id = rule_lang.word2index['[']
-    rsb_id = rule_lang.word2index[']']
-    l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
-    c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
-    eq_id  = rule_lang.word2index['=']
+    # topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    # if topis[0][0].item() == EOS_token:
+    #     # decoded_rule.append('<EOS>')
+    #     return topis[0][0], None, None, part
+    # topi = topis[0][0]
+    # lsb_id = rule_lang.word2index['[']
+    # rsb_id = rule_lang.word2index[']']
+    # l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
+    # c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
+    # eq_id  = rule_lang.word2index['=']
 
-    skip_ids = [prev] + list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    dps      = dp_pattern
-    words    = w_pattern
+    # skip_ids = [prev] + list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    # dps      = dp_pattern
+    # words    = w_pattern
 
-    for p in id2source:
-        if check_dp(id2source[p]):
-            dps.append(p)
-        else:
-            words.append(p)
+    # for p in id2source:
+    #     if check_dp(id2source[p]):
+    #         dps.append(p)
+    #     else:
+    #         words.append(p)
     
-    if lsb:
-        skip_ids.append(lsb_id)
-    else:
-        skip_ids.append(rsb_id)
+    # if lsb:
+    #     skip_ids.append(lsb_id)
+    # else:
+    #     skip_ids.append(rsb_id)
 
-    if part == 'word/lemma':
-        skip_ids += dps
-    elif part == 'effect/cause':
-        skip_ids += words
+    # if part == 'word/lemma':
+    #     skip_ids += dps
+    # elif part == 'effect/cause':
+    #     skip_ids += words
 
-    topi = top_skipIds(topis, skip_ids)
+    # topi = top_skipIds(topis, skip_ids)
 
-    if topi.item() == rsb_id:
-        lsb = False
-    if topi.item() == eq_id and  prev in c_e_id :
-        part = 'cause/effect'
-    if topi.item() == eq_id and  prev in l_w_id:
-        part = 'word/lemma'
+    # if topi.item() == rsb_id:
+    #     lsb = False
+    # if topi.item() == eq_id and  prev in c_e_id :
+    #     part = 'cause/effect'
+    # if topi.item() == eq_id and  prev in l_w_id:
+    #     part = 'word/lemma'
 
-    # topv, topi = decoder_output.topk(1)
+    topv, topi = decoder_output.topk(1)
 
-    if topi.item() == EOS_token:
+    if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
         return topi, None, None, part
     elif topi.item() in rule_lang.index2word:
         decoded = rule_lang.index2word[topi.item()]
     elif topi.item() in id2source:
-        decoded = id2source[topi.item()]+'_from_source'
+        decoded = id2source[topi.item()]
     else:
         decoded = 'UNK'
         # decoded_rule.append('UNK')
@@ -229,8 +229,6 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         decoder_input = topi.squeeze().detach()
                     else:
                         break
-                print (datapoint[2])
-                print (decoded_rule)
                 gold = True
                 if len(datapoint)>5:
                     if len(datapoint)>6:
@@ -239,7 +237,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
-                    decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
+                    # decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
                     references.append([rule])
                 
