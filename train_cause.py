@@ -157,7 +157,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     if topi.item() == eq_id and  prev in l_w_id:
         part = 'word/lemma'
 
-    topv, topi = decoder_output.topk(1)
+    # topv, topi = decoder_output.topk(1)
 
     if topi.item() == EOS_token:
         # decoded_rule.append('<EOS>')
