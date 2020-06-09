@@ -8,30 +8,11 @@ if __name__ == '__main__':
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
     trainning_set = list()
-    with open('LDC_training.json') as f:
-        raw_train1 = json.load(f)[:7000]
-    with open('eidos_training.json') as f:
-        raw_train2 = json.load(f)
-    with open('eidos_extra.json') as f:
-        raw_train2 = json.load(f)[:7000]
-    rd = defaultdict(int)
-    temp = list()
-    with open("rules_cause.json") as f:
-        rules = json.load(f)
-        for datapoint in raw_train2:
-            try:
-                rd[datapoint[5]] = len(rules[datapoint[5]])
-                datapoint[5] = rules[datapoint[5]]
-                temp.append(datapoint)
-            except KeyError:
-                pass
-
-    raw_train2 = temp[:]
-    del temp
-    random.shuffle(raw_train1)
-    random.shuffle(raw_train2)
-    raw_test  = raw_train1[:300]+raw_train2[:300]
-    raw_train = raw_train1[300:]+raw_train2[300:]
+    
+    with open('train.json') as f:
+        raw_train = json.load(f)
+    with open('test.json') as f:
+        raw_test = json.load(f)
 
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
