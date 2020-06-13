@@ -117,7 +117,6 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    print (decoder_output.data)
     topvs, topis = decoder_output.data.topk(decoder_output.size(1))
     if topis[0][0].item() == EOS_token:
         # decoded_rule.append('<EOS>')
