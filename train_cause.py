@@ -97,6 +97,8 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:
                     break
+    
+    print (loss)
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
@@ -342,7 +344,6 @@ if __name__ == '__main__':
         random.shuffle(trainning_set)
         total_loss = 0
         for i, data in enumerate(trainning_set):
-
             loss = train(data[0], data[1], data[2], data[3],
                      data[4], data[5], data[6],
                      encoder, classifier, decoder, encoder_optimizer, 
