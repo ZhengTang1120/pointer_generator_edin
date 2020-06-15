@@ -189,6 +189,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
 
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
