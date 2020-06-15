@@ -230,8 +230,8 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         break
                 gold = True
-                if len(datapoint)>5:
-                    if len(datapoint)>6:
+                if len(datapoint)>6:
+                    if len(datapoint)>7:
                         gold = datapoint[6]
                     else:
                         gold = False
@@ -283,7 +283,7 @@ if __name__ == '__main__':
 
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
-        if len(datapoint) > 5 and datapoint[5]:
+        if len(datapoint) > 6 and datapoint[5]:
             rule_lang.addSentence(datapoint[5])
     for pattern in rule_lang.word2index:
         if check_dp(pattern):
@@ -300,12 +300,12 @@ if __name__ == '__main__':
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
-            if len(datapoint) > 5 and datapoint[5]:
+            if len(datapoint) > 6 and datapoint[5]:
                 rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, datapoint[5], datapoint[2])
                 pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
                 rule_tensor = tensorFromIndexes(rule_ids)
                 rule = [rule_tensor, pg_mat, id2source]
-                if len(datapoint)>6:
+                if len(datapoint)>7:
                     gold = datapoint[6]
                 else:
                     gold = False
@@ -317,8 +317,6 @@ if __name__ == '__main__':
                 label = 0
             else:
                 label = 1
-
-            temp = datapoint[5] if len(datapoint)>5 else []
 
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
             edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
