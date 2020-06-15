@@ -101,10 +101,11 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
-    print (gold, rule_info)
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
-    torch.nn.utils.clip_grad_norm_(classifier.parameters(), clipping_value)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
+    if gold:
+        torch.nn.utils.clip_grad_norm_(classifier.parameters(), clipping_value)
+    if len(rule_info)!=0:
+        torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
 
     encoder_optimizer.step()
     classifier_optimizer.step()
