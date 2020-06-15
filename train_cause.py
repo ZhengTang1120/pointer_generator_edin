@@ -97,7 +97,6 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:
                     break
-    print (loss)
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
