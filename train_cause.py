@@ -43,7 +43,7 @@ def makeOutputIndexes(lang, output, input):
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
-def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, encoder, classifier, 
+def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, edge_index, encoder, classifier, 
     decoder, encoder_optimizer, classifier_optimizer, decoder_optimizer):
 
     criterion2 = nn.NLLLoss()
@@ -59,7 +59,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
 
     loss = 0
 
-    encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
+    encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
     
     if gold:
         classify_output = classifier(cause_vec, effect_vec)
@@ -116,47 +116,47 @@ def top_skipIds(topis, skids):
             return id
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    if topis[0][0].item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topis[0][0], None, None, part
-    topi = topis[0][0]
-    lsb_id = rule_lang.word2index['[']
-    rsb_id = rule_lang.word2index[']']
-    l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
-    c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
-    eq_id  = rule_lang.word2index['=']
+    # topvs, topis = decoder_output.data.topk(decoder_output.size(1))
+    # if topis[0][0].item() == EOS_token:
+    #     # decoded_rule.append('<EOS>')
+    #     return topis[0][0], None, None, part
+    # topi = topis[0][0]
+    # lsb_id = rule_lang.word2index['[']
+    # rsb_id = rule_lang.word2index[']']
+    # l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
+    # c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
+    # eq_id  = rule_lang.word2index['=']
 
-    skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    dps      = dp_pattern
-    words    = w_pattern
+    # skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    # dps      = dp_pattern
+    # words    = w_pattern
 
-    for p in id2source:
-        if check_dp(id2source[p]):
-            dps.append(p)
-        else:
-            words.append(p)
+    # for p in id2source:
+    #     if check_dp(id2source[p]):
+    #         dps.append(p)
+    #     else:
+    #         words.append(p)
     
-    if lsb:
-        skip_ids.append(lsb_id)
-    else:
-        skip_ids.append(rsb_id)
+    # if lsb:
+    #     skip_ids.append(lsb_id)
+    # else:
+    #     skip_ids.append(rsb_id)
 
-    if part == 'word/lemma':
-        skip_ids += dps
-    elif part == 'effect/cause':
-        skip_ids += words
+    # if part == 'word/lemma':
+    #     skip_ids += dps
+    # elif part == 'effect/cause':
+    #     skip_ids += words
 
-    topi = top_skipIds(topis, skip_ids)
+    # topi = top_skipIds(topis, skip_ids)
 
-    if topi.item() == rsb_id:
-        lsb = False
-    if topi.item() == eq_id and  prev in c_e_id :
-        part = 'cause/effect'
-    if topi.item() == eq_id and  prev in l_w_id:
-        part = 'word/lemma'
+    # if topi.item() == rsb_id:
+    #     lsb = False
+    # if topi.item() == eq_id and  prev in c_e_id :
+    #     part = 'cause/effect'
+    # if topi.item() == eq_id and  prev in l_w_id:
+    #     part = 'word/lemma'
 
-    # topv, topi = decoder_output.topk(1)
+    topv, topi = decoder_output.topk(1)
 
     if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
@@ -186,6 +186,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
+
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
             if datapoint[1]!='not_causal' and len(datapoint) <= 5:
@@ -204,7 +205,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 input_length = input_tensor.size(0)
 
 
-                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
+                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
                 classify_output = classifier(cause_vec, effect_vec)
                 classify_output = classify_output.detach()
 
@@ -275,9 +276,9 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     trainning_set = list()
 
-    with open('train.json') as f:
+    with open('train_GCN.json') as f:
         raw_train = json.load(f)
-    with open('test.json') as f:
+    with open('test_GCN.json') as f:
         raw_test = json.load(f)
 
     for datapoint in raw_train:
@@ -320,7 +321,8 @@ if __name__ == '__main__':
             temp = datapoint[5] if len(datapoint)>5 else []
 
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
+            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
+            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold, edge_index))
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
@@ -344,7 +346,7 @@ if __name__ == '__main__':
         for i, data in enumerate(trainning_set):
 
             loss = train(data[0], data[1], data[2], data[3],
-                     data[4], data[5],
+                     data[4], data[5], data[6],
                      encoder, classifier, decoder, encoder_optimizer, 
                      classifier_optimizer, decoder_optimizer)
             total_loss += loss

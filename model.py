@@ -4,6 +4,7 @@ from torch import optim
 import torch.nn.functional as F
 from language import *
 import random
+from torch_geometric.nn import GCNConv
 
 SEED = 1234
 
@@ -22,16 +23,19 @@ class EncoderRNN(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.lemma_embedding = nn.Embedding(2, 5)
         self.rnn = nn.LSTM(305, hidden_size, bidirectional=True)
+        
+        self.gcn = GCNConv(2 * self.hidden_size, 2 * self.hidden_size)
 
         self.attn = nn.Linear(hidden_size * 2, 1)
 
-    def forward(self, input, cause_pos, effect_pos):
+    def forward(self, input, cause_pos, effect_pos, edge_index):
         lemma = [1 if i in cause_pos or i in effect_pos else 0 for i in range(input.size(0))]
         lemma = torch.tensor(lemma, dtype=torch.long, device=device).view(-1, 1)
         lemma_embeded = self.lemma_embedding(lemma).view(-1, 1, 5)
         embedded = self.embedding(input).view(-1, 1, 300)
         embedded = torch.cat((embedded, lemma_embeded), dim=2)
         output, hidden = self.rnn(embedded)
+        output = self.gcn(output.view(-1, 2 * self.hidden_size), edge_index)
         outputs  = output.view(input.size(0), -1)
         cause_vec        = outputs[cause_pos[0]:cause_pos[-1]+1]
         effect_vec       = outputs[effect_pos[0]:effect_pos[-1]+1]
