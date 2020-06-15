@@ -98,10 +98,10 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
                 if decoder_input.item() == EOS_token:
                     break
     
-    print (loss)
     loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
+    print (gold, rule_info)
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
     torch.nn.utils.clip_grad_norm_(classifier.parameters(), clipping_value)
     torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
