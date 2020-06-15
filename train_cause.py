@@ -252,15 +252,13 @@ def eval_rules(references, candidates):
     for i, r in enumerate(candidates):
         if r == references[i][0]:
             c += 1
-        else:
-            print ("cand", r)
-            print ("ref ", references[i][0])
-            print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r))
-            print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r, weights=(1, 0, 0, 0)))
-            print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
-            print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
-            print('Cumulative 4-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.25, 0.25, 0.25, 0.25)))
-            print ()
+        print ("cand", r)
+        print ("ref ", references[i][0])
+        print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r, weights=(1, 0, 0, 0)))
+        print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
+        print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
+        print('Cumulative 4-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.25, 0.25, 0.25, 0.25)))
+        print ()
     return c/len(candidates), corpus_bleu(references, candidates, weights=(1, 0, 0, 0)), corpus_bleu(references, candidates, weights=(0.5, 0.5, 0, 0)), corpus_bleu(references, candidates, weights=(0.33, 0.33, 0.33, 0)), corpus_bleu(references, candidates, weights=(0.25, 0.25, 0.25, 0.25))
 
 if __name__ == '__main__': 
