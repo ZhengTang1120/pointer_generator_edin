@@ -28,7 +28,7 @@ class EncoderRNN(nn.Module):
 
         self.attn = nn.Linear(hidden_size * 2, 1)
 
-    def forward(self, input, cause_pos, effect_pos, edge_index):
+    def forward(self, input, cause_pos, effect_pos):
         lemma = [1 if i in cause_pos or i in effect_pos else 0 for i in range(input.size(0))]
         lemma = torch.tensor(lemma, dtype=torch.long, device=device).view(-1, 1)
         lemma_embeded = self.lemma_embedding(lemma).view(-1, 1, 5)

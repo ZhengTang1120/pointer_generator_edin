@@ -191,7 +191,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
-            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
+            # edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
 
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
@@ -211,7 +211,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 input_length = input_tensor.size(0)
 
 
-                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
+                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
                 classify_output = classifier(cause_vec, effect_vec)
                 classify_output = classify_output.detach()
 
