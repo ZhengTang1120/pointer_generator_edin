@@ -354,8 +354,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_new/%d"%epoch)
-        PATH = "model_cause_new/%d"%epoch
+        os.mkdir("model_cause_GCN/%d"%epoch)
+        PATH = "model_cause_GCN/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
