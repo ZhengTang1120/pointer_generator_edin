@@ -236,8 +236,8 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         break
                 gold = True
-                if len(datapoint)>6:
-                    if len(datapoint)>7:
+                if len(datapoint)>5:
+                    if len(datapoint)>6:
                         gold = datapoint[6]
                     else:
                         gold = False
