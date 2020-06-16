@@ -131,8 +131,8 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     eq_id  = rule_lang.word2index['=']
 
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    dps      = dp_pattern
-    words    = w_pattern
+    dps      = dp_pattern[:]
+    words    = w_pattern[:]
     print (part, prev, lsb)
     sd = []
     sw = []
