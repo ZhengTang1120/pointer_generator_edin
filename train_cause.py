@@ -263,8 +263,8 @@ def eval_rules(references, candidates):
             c += 1
         print ("cand", r)
         print ("ref ", references[i][0])
-        s += sentence_bleu(references[i][0], r)
-        print (sentence_bleu(references[i][0], r))
+        s += sentence_bleu(references[i], r)
+        print (sentence_bleu(references[i], r))
         # print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r, weights=(1, 0, 0, 0)))
         # print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
         # print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
