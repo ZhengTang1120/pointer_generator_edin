@@ -9,13 +9,22 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     trainning_set = list()
     
-    with open('train.json') as f:
+    with open('train_GCN.json') as f:
         raw_train = json.load(f)
-    with open('test.json') as f:
+    with open('test_GCN.json') as f:
         raw_test = json.load(f)
 
-    with open("lang.pickle") as f:
-        input_lang, rule_lang, raw_test = pickle.load(f)
+    for datapoint in raw_train:
+        input_lang.addSentence(datapoint[2])
+        if len(datapoint) > 5 and datapoint[5]:
+            rule_lang.addSentence(datapoint[5])
+    for pattern in rule_lang.word2index:
+        if check_dp(pattern):
+            dp_pattern.append(rule_lang.word2index[pattern])
+        elif pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']:
+            w_pattern.append(rule_lang.word2index[pattern])
+        else:
+            ot_pattern.append(rule_lang.word2index[pattern])
 
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
