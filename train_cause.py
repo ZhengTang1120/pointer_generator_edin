@@ -133,7 +133,6 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     dps      = dp_pattern
     words    = w_pattern
-    print (words)
     print (part, prev, lsb)
     sd = []
     sw = []
@@ -146,7 +145,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
             sw.append(id2source[p])
     print (sd)
     print (sw)
-    print (words)
+    print ([item for item in words if item not in w_pattern])
     if lsb:
         skip_ids.append(lsb_id)
     else:
@@ -260,6 +259,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
+        exit()
 
     print ('result', tp, p, t, eval_rules(references, candidates))
 
