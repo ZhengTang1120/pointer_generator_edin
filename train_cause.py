@@ -133,6 +133,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     dps      = dp_pattern
     words    = w_pattern
+    print (words)
     print (part, prev, lsb)
     sd = []
     sw = []
@@ -145,6 +146,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
             sw.append(id2source[p])
     print (sd)
     print (sw)
+    print (words)
     if lsb:
         skip_ids.append(lsb_id)
     else:
@@ -156,7 +158,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         skip_ids += words
 
     topi = top_skipIds(topis, skip_ids)
-
+    print (topi)
     if topi.item() == rsb_id:
         lsb = False
     if topi.item() == lsb_id:
