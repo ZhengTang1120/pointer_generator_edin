@@ -161,7 +161,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     if topi.item() == eq_id and  prev in l_w_id:
         part = 'word/lemma'
 
-    # topv, topi = decoder_output.topk(1)
+    topv, topi = decoder_output.topk(1)
 
     if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
@@ -191,7 +191,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
-            # edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
+            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
 
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
@@ -211,7 +211,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 input_length = input_tensor.size(0)
 
 
-                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
+                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
                 classify_output = classifier(cause_vec, effect_vec)
                 classify_output = classify_output.detach()
 
@@ -236,14 +236,12 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         break
                 gold = True
-                if len(datapoint)>5:
-                    if len(datapoint)>6:
+                if len(datapoint)>6:
+                    if len(datapoint)>7:
                         gold = datapoint[6]
                     else:
                         gold = False
                     rule = datapoint[5]
-                    print (rule)
-                    print ()
                     # decoded_rule.reverse()
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
@@ -263,10 +261,10 @@ def eval_rules(references, candidates):
     for i, r in enumerate(candidates):
         if r == references[i][0]:
             c += 1
-        print (r)
-        # print ("ref ", references[i][0])
-        s += sentence_bleu(references[i], r)
-        # print (sentence_bleu(references[i], r))
+        print ("cand", r)
+        print ("ref ", references[i][0])
+        s += sentence_bleu(references[i][0], r)
+        print (sentence_bleu(references[i][0], r))
         # print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r, weights=(1, 0, 0, 0)))
         # print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
         # print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
