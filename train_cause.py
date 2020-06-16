@@ -224,7 +224,6 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                             decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
                     
                     topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
-                    print (decoded)
                     if decoded is not None:
                         decoded_rule.append(decoded)
                         prev = topi.item()
