@@ -191,7 +191,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
-            if datapoint[1]!='not_causal' and len(datapoint) <= 6:
+            if datapoint[1]!='not_causal' and len(datapoint) <= 5:
                 t += 1
             if datapoint[1] == 'not_causal':
                 label = 0
@@ -238,8 +238,8 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
-                    print ("cand", decoded_rule)
-                    print ("ref ", rule)
+                    print (decoded_rule)
+                    # print ("ref ", rule)
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
                     references.append([rule])
@@ -264,7 +264,7 @@ def eval_rules(references, candidates):
         # print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
         # print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
         # print('Cumulative 4-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.25, 0.25, 0.25, 0.25)))
-        print ()
+        # print ()
     return c/len(candidates), s/len(candidates), corpus_bleu(references, candidates) #, weights=(1, 0, 0, 0)), corpus_bleu(references, candidates, weights=(0.5, 0.5, 0, 0)), corpus_bleu(references, candidates, weights=(0.33, 0.33, 0.33, 0)), corpus_bleu(references, candidates, weights=(0.25, 0.25, 0.25, 0.25))
 
 if __name__ == '__main__': 
