@@ -152,7 +152,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
 
     if part == 'word/lemma':
         skip_ids += dps
-    elif part == 'effect/cause':
+    elif part == 'cause/effect':
         skip_ids += words
     print (skip_ids)
     topi = top_skipIds(topis, skip_ids)
