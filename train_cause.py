@@ -145,7 +145,6 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
             sw.append(id2source[p])
     print (sd)
     print (sw)
-    print ([item for item in words if item not in w_pattern])
     if lsb:
         skip_ids.append(lsb_id)
     else:
@@ -155,7 +154,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         skip_ids += dps
     elif part == 'effect/cause':
         skip_ids += words
-
+    print (skip_ids)
     topi = top_skipIds(topis, skip_ids)
     print (topi)
     if topi.item() == rsb_id:
