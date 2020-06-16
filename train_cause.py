@@ -133,18 +133,11 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     dps      = dp_pattern[:]
     words    = w_pattern[:]
-    print (part, prev, lsb)
-    sd = []
-    sw = []
     for p in id2source:
         if check_dp(id2source[p]):
             dps.append(p)
-            sd.append(id2source[p])
         else:
             words.append(p)
-            sw.append(id2source[p])
-    print (sd)
-    print (sw)
     if lsb:
         skip_ids.append(lsb_id)
     else:
@@ -154,9 +147,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         skip_ids += dps
     elif part == 'cause/effect':
         skip_ids += words
-    print (skip_ids)
     topi = top_skipIds(topis, skip_ids)
-    print (topi)
     if topi.item() == rsb_id:
         lsb = False
     if topi.item() == lsb_id:
@@ -258,7 +249,6 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     p += 1
                     if (np.round(classify_output).item()==label):
                         tp += 1
-        exit()
 
     print ('result', tp, p, t, eval_rules(references, candidates))
 
@@ -299,13 +289,11 @@ if __name__ == '__main__':
             rule_lang.addSentence(datapoint[5])
     for pattern in rule_lang.word2index:
         if check_dp(pattern):
-            dp_pattern.append(pattern)
-        elif pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']:
-            w_pattern.append(pattern)
+            dp_pattern.append(rule_lang.word2index[pattern])
+        elif pattern == '${ trigger }' or (pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']):
+            w_pattern.append(rule_lang.word2index[pattern])
         else:
             ot_pattern.append(rule_lang.word2index[pattern])
-    print (w_pattern, dp_pattern)
-    exit()
     with open("lang.pickle", "wb") as f:
         pickle.dump((input_lang, rule_lang, raw_test), f)
 
