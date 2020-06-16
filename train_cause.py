@@ -238,9 +238,11 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
-                    print (decoded_rule)
+                    # print ("cand", decoded_rule)
                     # print ("ref ", rule)
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
+                    print (decoded_rule)
+                    print ()
                     candidates.append(decoded_rule)
                     references.append([rule])
                 
