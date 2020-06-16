@@ -242,6 +242,8 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         gold = False
                     rule = datapoint[5]
+                    print (rule)
+                    print ()
                     # decoded_rule.reverse()
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
@@ -261,7 +263,7 @@ def eval_rules(references, candidates):
     for i, r in enumerate(candidates):
         if r == references[i][0]:
             c += 1
-        print ("cand", r)
+        print (r)
         # print ("ref ", references[i][0])
         s += sentence_bleu(references[i], r)
         # print (sentence_bleu(references[i], r))
