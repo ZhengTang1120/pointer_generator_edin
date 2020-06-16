@@ -133,13 +133,18 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     dps      = dp_pattern
     words    = w_pattern
-
+    print (part, prev, lsb)
+    sd = []
+    sw = []
     for p in id2source:
         if check_dp(id2source[p]):
             dps.append(p)
+            sd.append(id2source[p])
         else:
             words.append(p)
-    
+            sw.append(id2source[p])
+    print (sd)
+    print (sw)
     if lsb:
         skip_ids.append(lsb_id)
     else:
@@ -161,7 +166,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     if topi.item() == eq_id and  prev in l_w_id:
         part = 'word/lemma'
 
-    topv, topi = decoder_output.topk(1)
+    # topv, topi = decoder_output.topk(1)
 
     if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
@@ -191,11 +196,11 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
     for datapoint in test:
         if len(datapoint[2]) < 512 and datapoint[1] != 'hastopic':
-            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
+            # edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
 
             input = makeIndexes(input_lang, datapoint[2])
             input_tensor   = tensorFromIndexes(input)
-            if datapoint[1]!='not_causal' and len(datapoint) <= 5:
+            if datapoint[1]!='not_causal' and len(datapoint) <= 6:
                 t += 1
             if datapoint[1] == 'not_causal':
                 label = 0
@@ -211,7 +216,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                 input_length = input_tensor.size(0)
 
 
-                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
+                encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
                 classify_output = classifier(cause_vec, effect_vec)
                 classify_output = classify_output.detach()
 
@@ -228,7 +233,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                             decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
                     
                     topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
-
+                    print (decoded)
                     if decoded is not None:
                         decoded_rule.append(decoded)
                         prev = topi.item()
@@ -236,13 +241,15 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     else:
                         break
                 gold = True
-                if len(datapoint)>6:
-                    if len(datapoint)>7:
+                if len(datapoint)>5:
+                    if len(datapoint)>6:
                         gold = datapoint[6]
                     else:
                         gold = False
                     rule = datapoint[5]
                     # decoded_rule.reverse()
+                    print ("cand", decoded_rule)
+                    print ("ref ", rule)
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
                     candidates.append(decoded_rule)
                     references.append([rule])
@@ -261,10 +268,8 @@ def eval_rules(references, candidates):
     for i, r in enumerate(candidates):
         if r == references[i][0]:
             c += 1
-        print ("cand", r)
-        print ("ref ", references[i][0])
-        s += sentence_bleu(references[i][0], r)
-        print (sentence_bleu(references[i][0], r))
+        s += sentence_bleu(references[i], r)
+        # print (sentence_bleu(references[i], r))
         # print('Cumulative 1-gram: %f' % sentence_bleu(references[i][0], r, weights=(1, 0, 0, 0)))
         # print('Cumulative 2-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.5, 0.5, 0, 0)))
         # print('Cumulative 3-gram: %f' % sentence_bleu(references[i][0], r, weights=(0.33, 0.33, 0.33, 0)))
@@ -282,23 +287,24 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     trainning_set = list()
 
-    with open('train_GCN.json') as f:
+    with open('train.json') as f:
         raw_train = json.load(f)
-    with open('test_GCN.json') as f:
+    with open('test.json') as f:
         raw_test = json.load(f)
 
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
-        if len(datapoint) > 6 and datapoint[5]:
+        if len(datapoint) > 5 and datapoint[5]:
             rule_lang.addSentence(datapoint[5])
     for pattern in rule_lang.word2index:
         if check_dp(pattern):
-            dp_pattern.append(rule_lang.word2index[pattern])
+            dp_pattern.append(pattern)
         elif pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']:
-            w_pattern.append(rule_lang.word2index[pattern])
+            w_pattern.append(pattern)
         else:
             ot_pattern.append(rule_lang.word2index[pattern])
-    
+    print (w_pattern, dp_pattern)
+    exit()
     with open("lang.pickle", "wb") as f:
         pickle.dump((input_lang, rule_lang, raw_test), f)
 
