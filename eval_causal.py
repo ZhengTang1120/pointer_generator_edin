@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     for datapoint in raw_train:
         input_lang.addSentence(datapoint[2])
-        if len(datapoint) > 5 and datapoint[5]:
+        if len(datapoint) > 6 and datapoint[5]:
             rule_lang.addSentence(datapoint[5])
     for pattern in rule_lang.word2index:
         if check_dp(pattern):
