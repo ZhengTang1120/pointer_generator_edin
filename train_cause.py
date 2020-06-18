@@ -127,7 +127,10 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     topv, topi3 = decoder_output.topk(1)
     if (topi1.item()!=topi3.item()):
         print (topis)
-        print (topi1, topi3) 
+        print (topvs)
+        print (topi1, topi3)
+        topv, topi2 = decoder_output.topk(0)
+        print (topi2) 
         print ()
     lsb_id = rule_lang.word2index['[']
     rsb_id = rule_lang.word2index[']']
