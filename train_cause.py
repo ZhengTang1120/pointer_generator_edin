@@ -241,8 +241,8 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
                     # print ("cand", decoded_rule)
                     # print ("ref ", rule)
                     decoded_rule = [token.replace('_from_source', '') for token in decoded_rule]
-                    print (datapoint[2])
-                    # print (decoded_rule)
+                    # print (datapoint[2])
+                    print (decoded_rule)
                     # print (sentence_bleu([rule], decoded_rule))
                     print ()
                     candidates.append(decoded_rule)
