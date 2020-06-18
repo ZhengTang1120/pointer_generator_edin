@@ -161,6 +161,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
 
     topv, topi = decoder_output.topk(1)
     print (topi)
+    print ()
 
     if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
