@@ -124,6 +124,11 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         # decoded_rule.append('<EOS>')
         return topis[0][0], None, None, part
     topi1 = topis[0][0]
+    topv, topi3 = decoder_output.topk(1)
+    if (topi1.item()!=topi3.item()):
+        print (topis)
+        print (topi1, topi3) 
+        print ()
     lsb_id = rule_lang.word2index['[']
     rsb_id = rule_lang.word2index[']']
     l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
@@ -147,21 +152,16 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     #     skip_ids += dps
     # elif part == 'cause/effect':
     #     skip_ids += words
-    topi2 = top_skipIds(topis, skip_ids)
-    if topi2.item() == rsb_id:
+    topi = top_skipIds(topis, skip_ids)
+    if topi.item() == rsb_id:
         lsb = False
-    if topi2.item() == lsb_id:
+    if topi.item() == lsb_id:
         lsb = True
-    if topi2.item() == eq_id and  prev in c_e_id :
+    if topi.item() == eq_id and  prev in c_e_id :
         part = 'cause/effect'
-    if topi2.item() == eq_id and  prev in l_w_id:
+    if topi.item() == eq_id and  prev in l_w_id:
         part = 'word/lemma'
 
-    topv, topi3 = decoder_output.topk(1)
-    if (topi1.item()!=topi2.item() or topi1.item()!=topi2.item() or topi2.item()!=topi3.item()):
-        print (topi1, topi2, topi3) 
-        print ()
-    topi = topi2
     if topi.item() == EOS_token or topi.item() == prev:
         # decoded_rule.append('<EOS>')
         return topi, None, None, part
