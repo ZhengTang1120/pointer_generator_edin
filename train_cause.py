@@ -148,13 +148,13 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     # elif part == 'cause/effect':
     #     skip_ids += words
     topi2 = top_skipIds(topis, skip_ids)
-    if topi.item() == rsb_id:
+    if topi2.item() == rsb_id:
         lsb = False
-    if topi.item() == lsb_id:
+    if topi2.item() == lsb_id:
         lsb = True
-    if topi.item() == eq_id and  prev in c_e_id :
+    if topi2.item() == eq_id and  prev in c_e_id :
         part = 'cause/effect'
-    if topi.item() == eq_id and  prev in l_w_id:
+    if topi2.item() == eq_id and  prev in l_w_id:
         part = 'word/lemma'
 
     topv, topi3 = decoder_output.topk(1)
