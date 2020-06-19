@@ -127,34 +127,28 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
     eq_id  = rule_lang.word2index['=']
     skip_ids = []
-    # skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    # dps      = dp_pattern[:]
-    # words    = w_pattern[:]
-    # for p in id2source:
-    #     if check_dp(id2source[p]):
-    #         dps.append(p)
-    #     else:
-    #         words.append(p)
-    # if lsb:
-    #     skip_ids.append(lsb_id)
-    # else:
-    #     skip_ids.append(rsb_id)
+    skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
+    dps      = dp_pattern[:]
+    words    = w_pattern[:]
+    for p in id2source:
+        if check_dp(id2source[p]):
+            dps.append(p)
+        else:
+            words.append(p)
+    if lsb:
+        skip_ids.append(lsb_id)
+    else:
+        skip_ids.append(rsb_id)
 
-    # if part == 'word/lemma':
-    #     skip_ids += dps
-    # elif part == 'cause/effect':
-    #     skip_ids += words
+    if part == 'word/lemma':
+        skip_ids += dps
+    elif part == 'cause/effect':
+        skip_ids += words
     
     sk_mat = np.eye(decoder_output.size(1))
     for i in skip_ids:
         sk_mat[i][i] = float('-inf')
     topi = top_skipIds(decoder_output, sk_mat)
-    topv, topi3 = decoder_output.topk(1)
-    if (topi.item()!=topi3.item()):
-        print (topis)
-        print (topvs)
-        print (topi, topi3)
-        print ()
     if topi.item() == rsb_id:
         lsb = False
     if topi.item() == lsb_id:
