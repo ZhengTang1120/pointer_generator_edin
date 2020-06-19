@@ -117,7 +117,8 @@ def top_skipIds(decoder_output, sk_mat):
 
     sk_mat = torch.tensor(sk_mat, dtype=torch.float, device=device)
     print (decoder_output.size(), sk_mat.size())
-    masked_decoder_output = decoder_output * sk_mat
+    masked_decoder_output = torch.mm(decoder_output, sk_mat)
+    print (masked_decoder_output.size())
     topv, topi = masked_decoder_output.topk(1)
     return topi
 
