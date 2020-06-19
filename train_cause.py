@@ -113,25 +113,13 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
 
     return loss.item()
 
-def top_skipIds(topis, skids):
-    for id in topis[0]:
-        if id.item() not in skids:
-            return id
+def top_skipIds(decoder_output, sk_mat):
+    sk_mat = torch.tensor(sk_mat, dtype=torch.float, device=device)
+    masked_decoder_output = decoder_output * sk_mat
+    topv, topi = masked_decoder_output.topk(1)
+    return topi
 
 def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
-    topvs, topis = decoder_output.data.topk(decoder_output.size(1))
-    if topis[0][0].item() == EOS_token:
-        # decoded_rule.append('<EOS>')
-        return topis[0][0], None, None, part
-    topi1 = topis[0][0]
-    topv, topi3 = decoder_output.topk(1)
-    if (topi1.item()!=topi3.item()):
-        print (topis)
-        print (topvs)
-        print (topi1, topi3)
-        topv, topi2 = decoder_output.topk(0)
-        print (topi2) 
-        print ()
     lsb_id = rule_lang.word2index['[']
     rsb_id = rule_lang.word2index[']']
     l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
@@ -155,7 +143,17 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     #     skip_ids += dps
     # elif part == 'cause/effect':
     #     skip_ids += words
-    topi = top_skipIds(topis, skip_ids)
+    
+    sk_mat = np.eye(decoder_output.size(1))
+    for i in skip_ids:
+        sk_mat[i][i] = float('-inf')
+    topi = top_skipIds(decoder_output, sk_mat)
+    topv, topi3 = decoder_output.topk(1)
+    if (topi.item()!=topi3.item()):
+        print (topis)
+        print (topvs)
+        print (topi, topi3)
+        print ()
     if topi.item() == rsb_id:
         lsb = False
     if topi.item() == lsb_id:
