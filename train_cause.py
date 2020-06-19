@@ -126,7 +126,6 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     l_w_id = [rule_lang.word2index['lemma'], rule_lang.word2index['word']]
     c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
     eq_id  = rule_lang.word2index['=']
-    skip_ids = []
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
     dps      = dp_pattern[:]
     words    = w_pattern[:]
