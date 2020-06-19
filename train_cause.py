@@ -116,9 +116,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
 def top_skipIds(decoder_output, sk_mat):
 
     sk_mat = torch.tensor(sk_mat, dtype=torch.float, device=device)
-    print (decoder_output.size(), sk_mat.size())
     masked_decoder_output = torch.mm(decoder_output, sk_mat)
-    print (masked_decoder_output.size())
     topv, topi = masked_decoder_output.topk(1)
     return topi
 
@@ -151,9 +149,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     for i in skip_ids:
         sk_mat[i][i] = float('-inf')
     topi = top_skipIds(decoder_output, sk_mat)
-    print (topi)
     topv, topi3 = decoder_output.topk(1)
-    print (topi3)
     if (topi.item()!=topi3.item()):
         print (topis)
         print (topvs)
