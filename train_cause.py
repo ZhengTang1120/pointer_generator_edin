@@ -30,7 +30,7 @@ def tensorFromIndexes(indexes):
 def makeOutputIndexes(lang, output, input):
     sourceset = {}
     id2source = {}
-    pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
+    pg_mat = np.eye((len(input) + 1, len(input) + 1)) * 1e-10
     for i, word in enumerate(input):
         if word not in sourceset:
             sourceset[word] = lang.n_words + len(sourceset)
@@ -91,8 +91,9 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
             for di in range(rule_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(
                     decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
-                # topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
-                topv, topi = decoder_output.topk(1)
+                topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
+                prev = topi.item()
+                # topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:
@@ -127,22 +128,22 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
     c_e_id = [rule_lang.word2index['cause: Entity'], rule_lang.word2index['effect: Entity']]
     eq_id  = rule_lang.word2index['=']
     skip_ids = list(range(rule_lang.n_words+len(id2source), decoder_output.size(1)))
-    # dps      = dp_pattern[:]
-    # words    = w_pattern[:]
-    # for p in id2source:
-    #     if check_dp(id2source[p]):
-    #         dps.append(p)
-    #     else:
-    #         words.append(p)
+    dps      = dp_pattern[:]
+    words    = w_pattern[:]
+    for p in id2source:
+        if check_dp(id2source[p]):
+            dps.append(p)
+        else:
+            words.append(p)
     if lsb:
         skip_ids.append(lsb_id)
     else:
         skip_ids.append(rsb_id)
 
-    # if part == 'word/lemma':
-    #     skip_ids += dps
-    # elif part == 'cause/effect':
-    #     skip_ids += words
+    if part == 'word/lemma':
+        skip_ids += dps
+    elif part == 'cause/effect':
+        skip_ids += words
     sk_mat = np.eye(decoder_output.size(1))
     for i in skip_ids:
         sk_mat[i][i] = float('inf')
@@ -352,8 +353,8 @@ if __name__ == '__main__':
         print (total_loss)
 
         evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
-        os.mkdir("model_cause_GCN/%d"%epoch)
-        PATH = "model_cause_GCN/%d"%epoch
+        os.mkdir("model_cause_new2/%d"%epoch)
+        PATH = "model_cause_new2/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
