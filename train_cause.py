@@ -143,7 +143,7 @@ def get_topi(decoder_output, rule_lang, id2source, lsb, part, prev):
         skip_ids += dps
     elif part == 'cause/effect':
         skip_ids += words
-    
+    print (skip_ids)
     sk_mat = np.eye(decoder_output.size(1))
     for i in skip_ids:
         sk_mat[i][i] = float('-inf')
