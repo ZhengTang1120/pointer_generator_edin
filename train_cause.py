@@ -115,7 +115,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     return loss.item()
 
 def top_skipIds(decoder_output, sk_mat):
-
+    print (decoder_output)
     sk_mat = torch.tensor(sk_mat, dtype=torch.float, device=device)
     masked_decoder_output = torch.mm(decoder_output, sk_mat)
     topv, topi = masked_decoder_output.topk(1)
