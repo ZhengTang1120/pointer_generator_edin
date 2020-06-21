@@ -30,7 +30,7 @@ def tensorFromIndexes(indexes):
 def makeOutputIndexes(lang, output, input):
     sourceset = {}
     id2source = {}
-    pg_mat = np.eye((len(input) + 1, len(input) + 1)) * 1e-10
+    pg_mat = np.eye(len(input) + 1) * 1e-10
     for i, word in enumerate(input):
         if word not in sourceset:
             sourceset[word] = lang.n_words + len(sourceset)
