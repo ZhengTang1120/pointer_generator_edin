@@ -30,7 +30,7 @@ def tensorFromIndexes(indexes):
 def makeOutputIndexes(lang, output, input):
     sourceset = {}
     id2source = {}
-    pg_mat = np.eye(len(input) + 1) * 1e-10
+    pg_mat = np.ones((len(input) + 1, len(input) + 1)) * 1e-10
     for i, word in enumerate(input):
         if word not in sourceset:
             sourceset[word] = lang.n_words + len(sourceset)
@@ -115,7 +115,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
     return loss.item()
 
 def top_skipIds(decoder_output, sk_mat):
-    print (decoder_output)
+
     sk_mat = torch.tensor(sk_mat, dtype=torch.float, device=device)
     masked_decoder_output = torch.mm(decoder_output, sk_mat)
     topv, topi = masked_decoder_output.topk(1)
