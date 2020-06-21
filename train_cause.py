@@ -43,7 +43,7 @@ def makeOutputIndexes(lang, output, input):
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
-def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, edge_index, encoder, classifier, 
+def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, encoder, classifier, 
     decoder, encoder_optimizer, classifier_optimizer, decoder_optimizer):
 
     criterion2 = nn.NLLLoss()
@@ -59,7 +59,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, ed
 
     loss = 0
 
-    encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos, edge_index)
+    encoder_outputs, encoder_hidden, cause_vec, effect_vec, cw, ew = encoder(input_tensor, cause_pos, effect_pos)
     
     if gold:
         classify_output = classifier(cause_vec, effect_vec)
@@ -321,8 +321,8 @@ if __name__ == '__main__':
                 label = 1
 
             label_tensor = torch.tensor([label], dtype=torch.float, device=device)
-            edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
-            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold, edge_index))
+            # edge_index   = torch.tensor(datapoint[-1], dtype=torch.long, device=device)
+            trainning_set.append((input_tensor, label_tensor, datapoint[3], datapoint[4], rule, gold))
     embeds = torch.FloatTensor(load_embeddings("glove.840B.300d.txt", input_lang))
     learning_rate = float(args.lr)
     hidden_size = 100
@@ -345,7 +345,7 @@ if __name__ == '__main__':
         total_loss = 0
         for i, data in enumerate(trainning_set):
             loss = train(data[0], data[1], data[2], data[3],
-                     data[4], data[5], data[6],
+                     data[4], data[5],
                      encoder, classifier, decoder, encoder_optimizer, 
                      classifier_optimizer, decoder_optimizer)
             total_loss += loss
