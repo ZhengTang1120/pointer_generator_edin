@@ -91,9 +91,9 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
             for di in range(rule_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(
                     decoder_input, decoder_hidden, encoder_outputs, pg_mat)
-                topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
-                prev = topi.item()
-                # topv, topi = decoder_output.topk(1)
+                # topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
+                # prev = topi.item()
+                topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()  # detach from history as input
                 loss += criterion2(decoder_output, rule_tensor[di])
                 if decoder_input.item() == EOS_token:

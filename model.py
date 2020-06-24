@@ -24,7 +24,7 @@ class EncoderRNN(nn.Module):
         self.lemma_embedding = nn.Embedding(2, 5)
         self.rnn = nn.LSTM(305, hidden_size, bidirectional=True)
 
-        self.linear = nn.Linear(6 * hidden_size, hidden_size)
+        self.linear = nn.Linear(4 * hidden_size, hidden_size)
         
         # self.gcn = GCNConv(2 * self.hidden_size, 2 * self.hidden_size)
 
@@ -43,7 +43,7 @@ class EncoderRNN(nn.Module):
         effect_vec       = outputs[effect_pos[0]:effect_pos[-1]+1]
         cause, cw = self.event_summary(cause_vec)
         effect, ew = self.event_summary(effect_vec)
-        hidden = self.linear(torch.cat((hidden, cause, effect)))
+        hidden = (self.linear(torch.cat((cause, effect))).view(1,1,-1), self.linear(torch.cat((cause, effect))).view(1,1,-1))
         return outputs, hidden, cause, effect, cw, ew
 
     def event_summary(self, event):
@@ -85,8 +85,8 @@ class AttnDecoderRNN(nn.Module):
         self.dropout_p = dropout_p
 
         self.embedding = nn.Embedding(self.output_size + 512, self.hidden_size)
-        self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size*2, bias=False)
-        self.attn_combine = nn.Linear(self.hidden_size * 4, self.hidden_size)
+        self.attn = nn.Linear(self.hidden_size, self.hidden_size*2, bias=False)
+        self.attn_combine = nn.Linear(self.hidden_size * 3, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
         self.rnn = nn.LSTM(self.hidden_size, self.hidden_size)
         self.out = nn.Linear(self.hidden_size, self.output_size)
@@ -94,7 +94,7 @@ class AttnDecoderRNN(nn.Module):
         self.softmax = nn.LogSoftmax(dim=1)
 
         self.wh = nn.Linear(self.hidden_size * 2, 1, bias=False)
-        self.ws = nn.Linear(self.hidden_size * 2, 1, bias=False)
+        self.ws = nn.Linear(self.hidden_size, 1, bias=False)
         self.wx = nn.Linear(self.hidden_size, 1)
 
     def forward(self, input, hidden, encoder_outputs, pg_mat):
@@ -125,7 +125,7 @@ class AttnDecoderRNN(nn.Module):
         output = output * p_gen
         output = torch.cat((output, atten_p),1)
         output = torch.log(output)
-
+        print (output)
         return output, hidden, attn_weights
 
     def initHidden(self):
