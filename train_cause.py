@@ -77,7 +77,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
             # Teacher forcing: Feed the target as the next input
             for di in range(rule_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
+                    decoder_input, decoder_hidden, encoder_outputs, pg_mat)
                 loss += criterion2(decoder_output, rule_tensor[di])
                 topv, topi = decoder_output.topk(1)
                 pred.append(topi.item())
@@ -90,7 +90,7 @@ def train(input_tensor, label_tensor, cause_pos, effect_pos, rule_info, gold, en
             # Without teacher forcing: use its own predictions as the next input
             for di in range(rule_length):
                 decoder_output, decoder_hidden, decoder_attention = decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
+                    decoder_input, decoder_hidden, encoder_outputs, pg_mat)
                 topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
                 prev = topi.item()
                 # topv, topi = decoder_output.topk(1)

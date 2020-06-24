@@ -23,6 +23,8 @@ class EncoderRNN(nn.Module):
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.lemma_embedding = nn.Embedding(2, 5)
         self.rnn = nn.LSTM(305, hidden_size, bidirectional=True)
+
+        self.linear = nn.Linear(6 * hidden_size, hidden_size)
         
         # self.gcn = GCNConv(2 * self.hidden_size, 2 * self.hidden_size)
 
@@ -41,6 +43,7 @@ class EncoderRNN(nn.Module):
         effect_vec       = outputs[effect_pos[0]:effect_pos[-1]+1]
         cause, cw = self.event_summary(cause_vec)
         effect, ew = self.event_summary(effect_vec)
+        hidden = self.linear(torch.cat((hidden, cause, effect)))
         return outputs, hidden, cause, effect, cw, ew
 
     def event_summary(self, event):
@@ -85,7 +88,7 @@ class AttnDecoderRNN(nn.Module):
         self.attn = nn.Linear(self.hidden_size * 2, self.hidden_size*2, bias=False)
         self.attn_combine = nn.Linear(self.hidden_size * 4, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
-        self.rnn = nn.LSTM(5 * self.hidden_size, self.hidden_size, bidirectional=True)
+        self.rnn = nn.LSTM(self.hidden_size, self.hidden_size)
         self.out = nn.Linear(self.hidden_size, self.output_size)
 
         self.softmax = nn.LogSoftmax(dim=1)
@@ -94,11 +97,11 @@ class AttnDecoderRNN(nn.Module):
         self.ws = nn.Linear(self.hidden_size * 2, 1, bias=False)
         self.wx = nn.Linear(self.hidden_size, 1)
 
-    def forward(self, input, hidden, encoder_outputs, cause, effect, pg_mat):
+    def forward(self, input, hidden, encoder_outputs, pg_mat):
         embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
-        output, hidden = self.rnn(torch.cat((embedded, cause.view(1, 1, -1), effect.view(1, 1, -1)), 2), hidden)
+        output, hidden = self.rnn(embedded, hidden)
 
         attn_weights = F.softmax(
             torch.mm(
