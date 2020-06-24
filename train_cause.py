@@ -219,7 +219,7 @@ def evaluate(encoder, classifier, decoder, test, input_lang, rule_lang):
 
                 for di in range(220):
                     decoder_output, decoder_hidden, decoder_attention = decoder(
-                            decoder_input, decoder_hidden, encoder_outputs, cause_vec, effect_vec, pg_mat)
+                            decoder_input, decoder_hidden, encoder_outputs, pg_mat)
                     
                     topi, decoded, lsb, part = get_topi(decoder_output, rule_lang, id2source, lsb, part, prev)
                     if decoded is not None:

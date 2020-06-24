@@ -125,7 +125,6 @@ class AttnDecoderRNN(nn.Module):
         output = output * p_gen
         output = torch.cat((output, atten_p),1)
         output = torch.log(output)
-        print (output)
         return output, hidden, attn_weights
 
     def initHidden(self):
