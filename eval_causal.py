@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     epoch = 2
     PATH = "model_cause_new3/%d"%int(epoch)
-    encoder = trch.load(PATH+"/encoder")
+    encoder = torch.load(PATH+"/encoder")
     classifier = torch.load(PATH+"/classifier")
     decoder = torch.load(PATH+'/decoder')
 
