@@ -29,7 +29,7 @@ if __name__ == '__main__':
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
 
-    epoch = 2
+    epoch = 4
     PATH = "model_cause_new3/%d"%int(epoch)
     encoder = torch.load(PATH+"/encoder")
     classifier = torch.load(PATH+"/classifier")
