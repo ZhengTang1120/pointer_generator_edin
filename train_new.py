@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
         trainning_set.append((input_tensor, cause, effect, trigger, dep_tensor, edge_index, label_tensor, rule_info, gold))
 
-    for i in range(100):
+    for epoch in range(100):
         random.shuffle(trainning_set)
         for datapoint in trainning_set:
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
