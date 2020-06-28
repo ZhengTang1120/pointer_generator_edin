@@ -2,7 +2,7 @@ from collections import defaultdict
 import numpy as np
 np.random.seed(1)
 import math
-
+EOS_token = 0
 class Lang:
     def __init__(self, name):
         self.name = name
@@ -36,10 +36,11 @@ def load_embeddings(file, lang):
             vector = (x /np.linalg.norm(x))
             embedding_size = vector.shape[0]
             emb_dict[word] = vector
+            break
     base = math.sqrt(6/embedding_size)
     emb_matrix = np.random.uniform(-base,base,(lang.n_words, embedding_size))
-    for i in range(3, lang.n_words):
-        word = lang.index2word[i]
-        if word in emb_dict:
-            emb_matrix[i] = emb_dict[word]
-    return emb_matrix
+    # for i in range(3, lang.n_words):
+    #     word = lang.index2word[i]
+    #     if word in emb_dict:
+    #         emb_matrix[i] = emb_dict[word]
+    return emb_matrix, embedding_size
