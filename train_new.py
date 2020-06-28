@@ -88,8 +88,99 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
     return loss.item()
 
-def eval():
-    return 0
+def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
+    encoder.eval()
+    classifier.eval()
+    decoder.eval()
+
+    t = 0.0
+    p = 0.0
+    tp = 0.0
+
+    references = []
+    candidates = []
+
+    for datapoint in raw:
+        label      = 0 if datapoint[1] == 'not_causal' else 1
+        sent       = datapoint[2]
+        cause      = datapoint[3]
+        effect     = datapoint[4]
+        trigger    = datapoint[5]
+        rule       = datapoint[6]
+        edge_index = datapoint[7]
+        edge_label = datapoint[8]
+        gold       = datapoint[9]
+
+        if label == 1:
+            t += 1
+
+        input        = makeIndexes(input_lang, sent)
+        input_tensor = tensorFromIndexes(input)
+
+        dep_labels = makeIndexes(depen_lang, edge_label)
+        dep_tensor = tensorFromIndexes(dep_labels)
+
+        edge_index   = torch.tensor(edge_index, dtype=torch.long, device=device)
+
+        _, pg_mat, id2source = makeOutputIndexes(rule_lang, [], edge_label)
+        pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
+
+        with torch.no_grad():
+            pred_trigger = []
+            pred_label   = None
+            decoded_rule = []
+
+            encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect)
+
+            for i in range(encoder_outputs.size(0)):
+                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
+                if i == 0:
+                    if np.round(context).item() == 0:
+                        pred_label = 0
+                        break
+                    else:
+                        pred_label = 1
+                else:
+                    if np.round(context).item() == 1:
+                        pred_trigger.append(i)
+
+            
+            if pred_label == 1:
+                p += 1
+                if label == 1:
+                    tp += 1
+
+                if len(pred_trigger) != 0:
+                    trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]
+                    trigger_vec, tw = encoder.event_summary(trigger_vec)
+                else:
+                    trigger_vec = encoder_outputs[0]
+                trigger_vec = trigger_vec.view(1,1,-1)
+                decoder_hidden = (trigger_vec, trigger_vec)
+                decoder_input  = torch.tensor([[0]], device=device)
+                for di in range(220):
+                    decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, 
+                        decoder_hidden, encoder_outputs, dep_embeds, 
+                        edge_index, pg_mat)
+                    topv, topi = decoder_output.topk(1)
+                    if topi.item() == EOS_token:
+                        break
+                   else:
+                        if topi.item() in rule_lang.index2word:
+                            decoded_rule.append(rule_lang.index2word[topi.item()])
+                        elif topi.item() in id2source:
+                            decoded_rule.append(id2source[topi.item()])
+                        else:
+                            decoded_rule.append('UNK')
+
+                    decoder_input = topi.squeeze().detach()
+
+            if len(rule) != 0:
+                candidates.append(decoded_rule)
+                references.append([rule])
+
+    return t, p, tp, corpus_bleu(references, candidates)
+
 
 if __name__ == '__main__':
 
@@ -175,9 +266,15 @@ if __name__ == '__main__':
     for i in range(100):
         random.shuffle(trainning_set)
         for datapoint in trainning_set:
-            print ("---------------------------")
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
 
+        os.mkdir("model_cause_GCN/%d"%epoch)
+        PATH = "model_cause_GCN/%d"%epoch
+        torch.save(encoder, PATH+"/encoder")
+        torch.save(classifier, PATH+"/classifier")
+        torch.save(decoder, PATH+"/decoder")
+
+        evaluate(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang)
 
 
         
