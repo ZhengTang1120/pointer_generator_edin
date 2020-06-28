@@ -165,7 +165,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     topv, topi = decoder_output.topk(1)
                     if topi.item() == EOS_token:
                         break
-                   else:
+                    else:
                         if topi.item() in rule_lang.index2word:
                             decoded_rule.append(rule_lang.index2word[topi.item()])
                         elif topi.item() in id2source:
