@@ -15,16 +15,21 @@ if __name__ == '__main__':
         raw_test = json.load(f)
 
     for datapoint in raw_train:
-        input_lang.addSentence(datapoint[2])
-        if len(datapoint) > 5 and datapoint[5]:
-            rule_lang.addSentence(datapoint[5])
-    for pattern in rule_lang.word2index:
-        if check_dp(pattern):
-            dp_pattern.append(rule_lang.word2index[pattern])
-        elif pattern == '${ trigger }' or (pattern.isalnum() and pattern.lower() == pattern and pattern not in ['outgoing', 'incoming', 'word', 'lemma', 'tag', 'trigger']):
-            w_pattern.append(rule_lang.word2index[pattern])
-        else:
-            ot_pattern.append(rule_lang.word2index[pattern])
+
+        label      = datapoint[1]
+        sent       = datapoint[2]
+        cause      = datapoint[3]
+        effect     = datapoint[4]
+        trigger    = datapoint[5]
+        rule       = datapoint[6]
+        edge_index = datapoint[7]
+        edge_label = datapoint[8]
+        gold       = datapoint[9]
+
+        input_lang.addSentence(sent)
+        if len(rule)!=0:
+            rule_lang.addSentence(rule)
+        depen_lang.addSentence(edge_label)
 
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
@@ -35,8 +40,4 @@ if __name__ == '__main__':
     classifier = torch.load(PATH+"/classifier")
     decoder = torch.load(PATH+'/decoder')
 
-    encoder.eval()
-    classifier.eval()
-    decoder.eval()
-
-    eval(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
+    eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang)
