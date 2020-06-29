@@ -144,7 +144,8 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     if np.round(context).item() == 1:
                         pred_trigger.append(i)
 
-            
+            print (pred_trigger)
+            print (trigger)
             if pred_label == 1:
                 p += 1
                 if label == 1:
@@ -176,8 +177,11 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     decoder_input = topi.squeeze().detach()
 
             if len(rule) != 0:
+                print (decoded_rule)
+                print (rule)
                 candidates.append(decoded_rule)
                 references.append([rule])
+            print ()
 
     return t, p, tp, corpus_bleu(references, candidates)
 
