@@ -274,7 +274,7 @@ if __name__ == '__main__':
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
 
-        eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang)
+        print (eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang))
 
 
         
