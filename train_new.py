@@ -58,7 +58,7 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
-        rule_length    = rule_tensor.size(0)
+        rule_length = rule_tensor.size(0)
         if len(trigger_pos) != 0:
             trigger_vec     = encoder_outputs[trigger_pos[0]:trigger_pos[-1]+1]
             trigger_vec, tw = encoder.event_summary(trigger_vec)
@@ -254,7 +254,7 @@ if __name__ == '__main__':
         if label == 'not_causal':
             label_tensor = torch.tensor([0 for i in sent], dtype=torch.float, device=device)
         else:
-            label_tensor = torch.tensor([1 if i in trigger+[-1] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
+            label_tensor = torch.tensor([1 if i in trigger+[len(sent)] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
 
         edge_index   = torch.tensor(edge_index, dtype=torch.long, device=device)
 
