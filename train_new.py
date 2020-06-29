@@ -8,7 +8,7 @@ from collections import defaultdict
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
-    indexes.append(EOS_token)
+    # indexes.append(EOS_token)
     return indexes
 
 def tensorFromIndexes(indexes):
