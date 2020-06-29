@@ -1,6 +1,6 @@
-from model import *
+from model_GCN import *
 from utils import *
-from train_cause import *
+from train_new import *
 import json
 
 if __name__ == '__main__':
@@ -9,9 +9,9 @@ if __name__ == '__main__':
     rule_lang  = Lang("rule")
     trainning_set = list()
     
-    with open('train.json') as f:
+    with open('train_GCN.json') as f:
         raw_train = json.load(f)
-    with open('test.json') as f:
+    with open('dev_GCN.json') as f:
         raw_test = json.load(f)
 
     for datapoint in raw_train:
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     #     f.write(json.dumps(raw_test))
 
     epoch = 0
-    PATH = "model_cause_new2/%d"%int(epoch)
+    PATH = "model_cause_GCN/%d"%int(epoch)
     encoder = torch.load(PATH+"/encoder")
     classifier = torch.load(PATH+"/classifier")
     decoder = torch.load(PATH+'/decoder')
@@ -39,4 +39,4 @@ if __name__ == '__main__':
     classifier.eval()
     decoder.eval()
 
-    evaluate(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
+    eval(encoder, classifier, decoder, raw_test, input_lang, rule_lang)
