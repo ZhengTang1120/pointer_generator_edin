@@ -8,7 +8,6 @@ from collections import defaultdict
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
-    # indexes.append(EOS_token)
     return indexes
 
 def tensorFromIndexes(indexes):
@@ -58,12 +57,12 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
     if len(rule_info)!=0:
         rule_tensor, pg_mat, id2source = rule_info
-        rule_length = rule_tensor.size(0)
+        rule_length    = rule_tensor.size(0)
         if len(trigger_pos) != 0:
             trigger_vec     = encoder_outputs[trigger_pos[0]:trigger_pos[-1]+1]
             trigger_vec, tw = encoder.event_summary(trigger_vec)
         else:
-            trigger_vec = encoder_outputs[-1]
+            trigger_vec = encoder_outputs[0]
         trigger_vec = trigger_vec.view(1,1,-1)
         decoder_hidden = (trigger_vec, trigger_vec)
         decoder_input  = torch.tensor([[0]], device=device)
@@ -134,19 +133,18 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect)
 
             for i in range(encoder_outputs.size(0)):
-                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index).cpu()
+                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
                 if i == 0:
-                    if np.round(context).item() == 0:
+                    if np.round(context.cpu()).item() == 0:
                         pred_label = 0
                         break
                     else:
                         pred_label = 1
                 else:
-                    if np.round(context).item() == 1:
+                    if np.round(context.cpu()).item() == 1:
                         pred_trigger.append(i)
 
-            print (pred_trigger)
-            print (trigger)
+            
             if pred_label == 1:
                 p += 1
                 if label == 1:
@@ -178,11 +176,8 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     decoder_input = topi.squeeze().detach()
 
             if len(rule) != 0:
-                print (decoded_rule)
-                print (rule)
                 candidates.append(decoded_rule)
                 references.append([rule])
-            print ()
 
     return t, p, tp, corpus_bleu(references, candidates)
 
@@ -254,7 +249,7 @@ if __name__ == '__main__':
         if label == 'not_causal':
             label_tensor = torch.tensor([0 for i in sent], dtype=torch.float, device=device)
         else:
-            label_tensor = torch.tensor([1 if i in trigger+[len(sent)] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
+            label_tensor = torch.tensor([1 if i in trigger+[0] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
 
         edge_index   = torch.tensor(edge_index, dtype=torch.long, device=device)
 
