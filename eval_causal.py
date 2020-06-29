@@ -13,7 +13,7 @@ if __name__ == '__main__':
     with open('train_GCN.json') as f:
         raw_train = json.load(f)
     with open('dev_GCN.json') as f:
-        raw_test = json.load(f)
+        raw_dev = json.load(f)
 
     for datapoint in raw_train:
 
