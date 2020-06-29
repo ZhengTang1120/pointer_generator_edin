@@ -135,7 +135,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
 
             for i in range(encoder_outputs.size(0)):
                 context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index).cpu()
-                if i == encoder_outputs.size(0)-1:
+                if i == 0:
                     if np.round(context).item() == 0:
                         pred_label = 0
                         break
@@ -156,7 +156,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]
                     trigger_vec, tw = encoder.event_summary(trigger_vec)
                 else:
-                    trigger_vec = encoder_outputs[-1]
+                    trigger_vec = encoder_outputs[0]
                 trigger_vec = trigger_vec.view(1,1,-1)
                 decoder_hidden = (trigger_vec, trigger_vec)
                 decoder_input  = torch.tensor([[0]], device=device)
