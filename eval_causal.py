@@ -7,6 +7,7 @@ if __name__ == '__main__':
 
     input_lang = Lang("input")
     rule_lang  = Lang("rule")
+    depen_lang = Lang("depen")
     trainning_set = list()
     
     with open('train_GCN.json') as f:
