@@ -49,7 +49,7 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
     encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause_pos, effect_pos)
 
     if gold:
-        predicts = torch.empty(size=label_tensor.size())
+        predicts = torch.empty(size=label_tensor.size(), device=device)
         for i in range(encoder_outputs.size(0)):
             context     = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
             predicts[i] = context
