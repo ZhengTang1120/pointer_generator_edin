@@ -8,6 +8,7 @@ from collections import defaultdict
 
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
+    indexes.append(EOS_token)
     return indexes
 
 def tensorFromIndexes(indexes):
@@ -62,7 +63,7 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
             trigger_vec     = encoder_outputs[trigger_pos[0]:trigger_pos[-1]+1]
             trigger_vec, tw = encoder.event_summary(trigger_vec)
         else:
-            trigger_vec = encoder_outputs[0]
+            trigger_vec = encoder_outputs[-1]
         trigger_vec = trigger_vec.view(1,1,-1)
         decoder_hidden = (trigger_vec, trigger_vec)
         decoder_input  = torch.tensor([[0]], device=device)
@@ -133,8 +134,8 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect)
 
             for i in range(encoder_outputs.size(0)):
-                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
-                if i == 0:
+                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index).cpu()
+                if i == encoder_outputs.size(0)-1:
                     if np.round(context).item() == 0:
                         pred_label = 0
                         break
@@ -155,7 +156,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]
                     trigger_vec, tw = encoder.event_summary(trigger_vec)
                 else:
-                    trigger_vec = encoder_outputs[0]
+                    trigger_vec = encoder_outputs[-1]
                 trigger_vec = trigger_vec.view(1,1,-1)
                 decoder_hidden = (trigger_vec, trigger_vec)
                 decoder_input  = torch.tensor([[0]], device=device)
@@ -253,7 +254,7 @@ if __name__ == '__main__':
         if label == 'not_causal':
             label_tensor = torch.tensor([0 for i in sent], dtype=torch.float, device=device)
         else:
-            label_tensor = torch.tensor([1 if i in trigger+[0] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
+            label_tensor = torch.tensor([1 if i in trigger+[-1] else 0 for i,w in enumerate(sent)], dtype=torch.float, device=device)
 
         edge_index   = torch.tensor(edge_index, dtype=torch.long, device=device)
 
