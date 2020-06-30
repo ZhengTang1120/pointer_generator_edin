@@ -13,7 +13,7 @@ torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 
-device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, embedding_size, syn_size, hidden_size, pretrained):
