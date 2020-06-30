@@ -135,16 +135,17 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             for i in range(encoder_outputs.size(0)):
                 context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
                 if i == 0:
-                    if np.round(context.cpu()).item() == 0:
+                    if np.round(context).item() == 0:
                         pred_label = 0
                         break
                     else:
                         pred_label = 1
                 else:
-                    if np.round(context.cpu()).item() == 1:
+                    if np.round(context).item() == 1:
                         pred_trigger.append(i)
 
-            
+            print (pred_trigger)
+            print (trigger)
             if pred_label == 1:
                 p += 1
                 if label == 1:
