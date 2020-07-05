@@ -19,17 +19,18 @@ class EncoderRNN(nn.Module):
     def __init__(self, input_size, embedding_size, syn_size, hidden_size, pretrained):
         super(EncoderRNN, self).__init__()
 
-        self.embedding = nn.Embedding(input_size, 300)#.from_pretrained(pretrained, freeze=False)
+        self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.lemma_embedding = nn.Embedding(2, 5)
         self.syn_embedding = nn.Embedding(syn_size, hidden_size)
         
         self.rnn = nn.LSTM(embedding_size + 5, hidden_size, bidirectional=True)
 
-        self.linear = nn.Linear(hidden_size * 2, hidden_size)
+        self.linear  = nn.Linear(hidden_size * 2,   hidden_size)
+        self.linear2 = nn.Linear(hidden_size + 610, hidden_size)
 
         self.attn = nn.Linear(hidden_size, 1)
 
-    def forward(self, input, syn_labels, cause_pos, effect_pos):
+    def forward(self, input, syn_labels, cause_pos, effect_pos, edge_index):
         lemma = [1 if i in cause_pos or i in effect_pos else 0 for i in range(input.size(0))]
         lemma = torch.tensor(lemma, dtype=torch.long, device=device).view(-1, 1)
         lemma_embeded = self.lemma_embedding(lemma).view(-1, 1, 5)
@@ -37,8 +38,12 @@ class EncoderRNN(nn.Module):
         embedded = self.embedding(input).view(-1, 1, 300)
         embedded = torch.cat((embedded, lemma_embeded), dim=2)
         
-        syn_embedded = self.syn_embedding(syn_labels).view(syn_labels.size(0), -1)
-        
+        syn_embedded         = self.syn_embedding(syn_labels).view(syn_labels.size(0), -1)
+        first_word_embedded  = embedded[edge_index[0],:,:].view(syn_labels.size(0), -1)
+        second_word_embedded = embedded[edge_index[1],:,:].view(syn_labels.size(0), -1)
+        syn_embedded         = torch.cat((syn_embedded, first_word_embedded, second_word_embedded), 1)
+        syn_embedded         = self.linear2(syn_embedded)
+
         output, hidden = self.rnn(embedded)
         output  = self.linear(output)
         outputs = output.view(input.size(0), -1)

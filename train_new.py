@@ -45,7 +45,7 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
     loss = 0
 
-    encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause_pos, effect_pos)
+    encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause_pos, effect_pos, edge_index)
 
     if gold:
         predicts = torch.empty(size=label_tensor.size(), device=device)
