@@ -18,7 +18,6 @@ def makeOutputIndexes(lang, output, labels):
     id2source = {}
     pg_mat = np.ones((len(labels), len(labels))) * 1e-10
     for i, label in enumerate(labels):
-        label = label.split("_")[0]
         if label not in sourceset:
             sourceset[label] = lang.n_words + len(sourceset)
             id2source[sourceset[label]] = label
