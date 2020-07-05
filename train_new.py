@@ -129,7 +129,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             pred_label   = None
             decoded_rule = []
 
-            encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect)
+            encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect, edge_index)
 
             for i in range(encoder_outputs.size(0)):
                 context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
