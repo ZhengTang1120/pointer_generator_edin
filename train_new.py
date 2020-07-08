@@ -185,7 +185,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 candidates.append(decoded_rule)
                 references.append([rule])
 
-    return t, p, tp, corpus_bleu(references, candidates)
+    return t, p, tp, tt, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
