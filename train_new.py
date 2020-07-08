@@ -181,6 +181,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             if len(rule) != 0:
                 print (decoded_rule)
                 print (rule)
+                print (sentence_bleu([rule], decoded_rule))
                 print ()
                 candidates.append(decoded_rule)
                 references.append([rule])
