@@ -3,7 +3,7 @@ from utils import *
 import json
 import os
 import argparse
-from nltk.translate.bleu_score import corpus_bleu
+from nltk.translate.bleu_score import corpus_bleu, sentence_bleu
 from collections import defaultdict
 
 def makeIndexes(lang, seq):
