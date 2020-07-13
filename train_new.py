@@ -275,8 +275,8 @@ if __name__ == '__main__':
         for datapoint in trainning_set:
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
 
-        os.mkdir("model_cause_GCN_c/%d"%epoch)
-        PATH = "model_cause_GCN_c/%d"%epoch
+        os.mkdir("model_cause_GCN_c_ns/%d"%epoch)
+        PATH = "model_cause_GCN_c_ns/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
