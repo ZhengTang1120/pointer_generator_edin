@@ -73,13 +73,13 @@ class Classifier(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, i, encoder_outputs, syn_embeddeds, cause, effect, edge_index):
-        edge_weights = F.softmax(
-            torch.mm(
-                self.attn(encoder_outputs[i].view( 1,-1)), torch.t(syn_embeddeds)
-                )
-            , dim=1)
-        edge_weights = edge_weights.squeeze(0)
-        outputs = self.gcn(encoder_outputs, edge_index, edge_weights)
+        # edge_weights = F.softmax(
+        #     torch.mm(
+        #         self.attn(encoder_outputs[i].view( 1,-1)), torch.t(syn_embeddeds)
+        #         )
+        #     , dim=1)
+        # edge_weights = edge_weights.squeeze(0)
+        outputs = self.gcn(encoder_outputs, edge_index)
         output = torch.cat((outputs[i], cause, effect))
         output = self.sigmoid(self.out(output))
         return output
