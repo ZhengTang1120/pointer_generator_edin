@@ -79,7 +79,7 @@ class Classifier(nn.Module):
                 )
             , dim=1)
         edge_weights = edge_weights.squeeze(0)
-        outputs = self.gcn(encoder_outputs, edge_index)
+        outputs = self.gcn(encoder_outputs, edge_index, edge_weights)
         output = torch.cat((outputs[i], cause, effect))
         output = self.sigmoid(self.out(output))
         return output
