@@ -25,6 +25,8 @@ class EncoderRNN(nn.Module):
         
         self.rnn = nn.LSTM(embedding_size + 5, hidden_size, bidirectional=True)
 
+        self.gcn = GCNConv(hidden_size, hidden_size)
+
         self.linear  = nn.Linear(hidden_size * 2,   hidden_size)
         self.linear2 = nn.Linear(hidden_size + 610, hidden_size)
 
@@ -47,6 +49,7 @@ class EncoderRNN(nn.Module):
         output, hidden = self.rnn(embedded)
         output  = self.linear(output)
         outputs = output.view(input.size(0), -1)
+        outputs = self.gcn(outputs, edge_index)
         
         cause_vec = outputs[cause_pos[0]:cause_pos[-1]+1]
         effect_vec = outputs[effect_pos[0]:effect_pos[-1]+1]
@@ -79,8 +82,8 @@ class Classifier(nn.Module):
         #         )
         #     , dim=1)
         # edge_weights = edge_weights.squeeze(0)
-        outputs = self.gcn(encoder_outputs, edge_index)
-        output = torch.cat((outputs[i], cause, effect))
+        # outputs = self.gcn(encoder_outputs, edge_index)
+        output = torch.cat((encoder_outputs[i], cause, effect))
         output = self.sigmoid(self.out(output))
         return output
 
