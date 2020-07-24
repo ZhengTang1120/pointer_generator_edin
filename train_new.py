@@ -45,32 +45,32 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
     loss = 0
 
-    encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause_pos, effect_pos, edge_index)
+    encoder_outputs, cause_vec, effect_vec, cw, ew = encoder(input_tensor, dep_tensor, cause_pos, effect_pos, edge_index)
 
     if gold:
         predicts = torch.empty(size=label_tensor.size(), device=device)
         for i in range(encoder_outputs.size(0)):
-            context     = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
+            context     = classifier(i, encoder_outputs, cause_vec, effect_vec, edge_index)
             predicts[i] = context
         loss = criterion1(predicts, label_tensor)
 
-    # if len(rule_info)!=0:
-    #     rule_tensor, pg_mat, id2source = rule_info
-    #     rule_length    = rule_tensor.size(0)
-    #     if len(trigger_pos) != 0:
-    #         trigger_vec     = encoder_outputs[trigger_pos[0]:trigger_pos[-1]+1]
-    #         trigger_vec, tw = encoder.event_summary(trigger_vec)
-    #     else:
-    #         trigger_vec = encoder_outputs[0]
-    #     trigger_vec = trigger_vec.view(1,1,-1)
-    #     decoder_hidden = (trigger_vec, trigger_vec)
-    #     decoder_input  = torch.tensor([[0]], device=device)
-    #     for di in range(rule_length):
-    #         decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, 
-    #             decoder_hidden, encoder_outputs, dep_embeds, 
-    #             edge_index, pg_mat)
-    #         loss += criterion2(decoder_output, rule_tensor[di])
-    #         decoder_input = rule_tensor[di]
+    if len(rule_info)!=0:
+        rule_tensor, pg_mat, id2source = rule_info
+        rule_length    = rule_tensor.size(0)
+        if len(trigger_pos) != 0:
+            trigger_vec     = encoder_outputs[trigger_pos[0]:trigger_pos[-1]+1]
+            trigger_vec, tw = encoder.event_summary(trigger_vec)
+        else:
+            trigger_vec = encoder_outputs[0]
+        trigger_vec = trigger_vec.view(1,1,-1)
+        decoder_hidden = (trigger_vec, trigger_vec)
+        decoder_input  = torch.tensor([[0]], device=device)
+        for di in range(rule_length):
+            decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, 
+                decoder_hidden, encoder_outputs, 
+                edge_index, pg_mat)
+            loss += criterion2(decoder_output, rule_tensor[di])
+            decoder_input = rule_tensor[di]
 
         loss.backward()
 
@@ -78,8 +78,8 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
         torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
         if gold:
             torch.nn.utils.clip_grad_norm_(classifier.parameters(), clipping_value)
-        # if len(rule_info)!=0:
-        #     torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
+        if len(rule_info)!=0:
+            torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
 
         encoder_optimizer.step()
         classifier_optimizer.step()
@@ -131,10 +131,10 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             pred_label   = None
             decoded_rule = []
 
-            encoder_outputs, cause_vec, effect_vec, cw, ew, dep_embeds = encoder(input_tensor, dep_tensor, cause, effect, edge_index)
+            encoder_outputs, cause_vec, effect_vec, cw, ew = encoder(input_tensor, dep_tensor, cause, effect, edge_index)
 
             for i in range(encoder_outputs.size(0)):
-                context = classifier(i, encoder_outputs, dep_embeds, cause_vec, effect_vec, edge_index)
+                context = classifier(i, encoder_outputs, cause_vec, effect_vec, edge_index)
                 if i == 0:
                     if np.round(context).item() == 0:
                         pred_label = 0
@@ -156,40 +156,40 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 if label == 1:
                     tp += 1
 
-                # if len(pred_trigger) != 0:
-                #     trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]
-                #     trigger_vec, tw = encoder.event_summary(trigger_vec)
-                # else:
-                #     trigger_vec = encoder_outputs[0]
-                # trigger_vec = trigger_vec.view(1,1,-1)
-            #     decoder_hidden = (trigger_vec, trigger_vec)
-            #     decoder_input  = torch.tensor([[0]], device=device)
-            #     for di in range(220):
-            #         decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, 
-            #             decoder_hidden, encoder_outputs, dep_embeds, 
-            #             edge_index, pg_mat)
-            #         topv, topi = decoder_output.topk(1)
-            #         if topi.item() == EOS_token:
-            #             break
-            #         else:
-            #             if topi.item() in rule_lang.index2word:
-            #                 decoded_rule.append(rule_lang.index2word[topi.item()])
-            #             elif topi.item() in id2source:
-            #                 decoded_rule.append(id2source[topi.item()])
-            #             else:
-            #                 decoded_rule.append('UNK')
+                if len(pred_trigger) != 0:
+                    trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]
+                    trigger_vec, tw = encoder.event_summary(trigger_vec)
+                else:
+                    trigger_vec = encoder_outputs[0]
+                trigger_vec = trigger_vec.view(1,1,-1)
+                decoder_hidden = (trigger_vec, trigger_vec)
+                decoder_input  = torch.tensor([[0]], device=device)
+                for di in range(220):
+                    decoder_output, decoder_hidden, decoder_attention = decoder(decoder_input, 
+                        decoder_hidden, encoder_outputs, 
+                        edge_index, pg_mat)
+                    topv, topi = decoder_output.topk(1)
+                    if topi.item() == EOS_token:
+                        break
+                    else:
+                        if topi.item() in rule_lang.index2word:
+                            decoded_rule.append(rule_lang.index2word[topi.item()])
+                        elif topi.item() in id2source:
+                            decoded_rule.append(id2source[topi.item()])
+                        else:
+                            decoded_rule.append('UNK')
 
-            #         decoder_input = topi.squeeze().detach()
+                    decoder_input = topi.squeeze().detach()
 
-            # if len(rule) != 0:
-            #     print (decoded_rule)
-            #     print (rule)
-            #     print (sentence_bleu([rule], decoded_rule))
-            #     print ()
-            #     candidates.append(decoded_rule)
-            #     references.append([rule])
+            if len(rule) != 0:
+                print (decoded_rule)
+                print (rule)
+                print (sentence_bleu([rule], decoded_rule))
+                print ()
+                candidates.append(decoded_rule)
+                references.append([rule])
 
-    return t, p, tp, tt, tc#, corpus_bleu(references, candidates)
+    return t, p, tp, tt, tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
@@ -264,7 +264,7 @@ if __name__ == '__main__':
         edge_index   = torch.tensor(edge_index, dtype=torch.long, device=device)
 
         if len(rule)!=0:
-            rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, edge_label)
+            rule_ids, pg_mat, id2source = makeOutputIndexes(rule_lang, rule, sent)
             pg_mat = torch.tensor(pg_mat, dtype=torch.float, device=device)
             rule_tensor = tensorFromIndexes(rule_ids)
             rule_info = [rule_tensor, pg_mat, id2source]
