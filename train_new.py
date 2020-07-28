@@ -97,6 +97,8 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
     tp = 0.0
     tt = 0.0
     tc = 0.0
+    source = 0.0
+    total = 0.0
 
     references = []
     candidates = []
@@ -172,9 +174,11 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     if topi.item() == EOS_token:
                         break
                     else:
+                        total += 1
                         if topi.item() in rule_lang.index2word:
                             decoded_rule.append(rule_lang.index2word[topi.item()])
                         elif topi.item() in id2source:
+                            source += 1
                             decoded_rule.append(id2source[topi.item()])
                         else:
                             decoded_rule.append('UNK')
@@ -189,7 +193,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 candidates.append(decoded_rule)
                 references.append([rule])
 
-    return t, p, tp, tt, tc, corpus_bleu(references, candidates)
+    return t, p, tp, tt, tc, source, total, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
