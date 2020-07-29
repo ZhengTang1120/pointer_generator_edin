@@ -92,7 +92,7 @@ class AttnDecoderRNN(nn.Module):
         self.output_size = output_size
         self.dropout_p = dropout_p
 
-        self.embedding = nn.Embedding(self.output_size + 512, self.hidden_size)
+        self.embedding = nn.Embedding(self.output_size, self.hidden_size)
         self.attn = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
         # self.atten_gcn = GCNConv(hidden_size, hidden_size)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
