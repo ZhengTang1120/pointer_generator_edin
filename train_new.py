@@ -14,20 +14,19 @@ def tensorFromIndexes(indexes):
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
 def makeOutputIndexes(lang, output, labels):
-    # sourceset = {}
-    # id2source = {}
-    # pg_mat = np.ones((len(labels), len(labels))) * 1e-10
-    # for i, label in enumerate(labels):
-    #     if label not in sourceset:
-    #         sourceset[label] = lang.n_words + len(sourceset)
-    #         id2source[sourceset[label]] = label
-    #     pg_mat[sourceset[label]-lang.n_words][i] = 1
+    sourceset = {}
+    id2source = {}
+    pg_mat = np.ones((len(labels), len(labels))) * 1e-10
+    for i, label in enumerate(labels):
+        if label not in sourceset:
+            sourceset[label] = lang.n_words + len(sourceset)
+            id2source[sourceset[label]] = label
+        pg_mat[sourceset[label]-lang.n_words][i] = 1
     # indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
-    
     # indexes.reverse()
     indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
     indexes.append(EOS_token)
-    return indexes, None, None
+    return indexes, pg_mat, id2source
 
 def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer):
     
