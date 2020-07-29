@@ -27,7 +27,7 @@ def makeOutputIndexes(lang, output, labels):
     # indexes.reverse()
     indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
     indexes.append(EOS_token)
-    return indexes, pg_mat, id2source
+    return indexes, None, None
 
 def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer):
     
