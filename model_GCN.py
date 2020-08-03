@@ -67,7 +67,7 @@ class Classifier(nn.Module):
         self.hidden_size = hidden_size
 
         self.attn = nn.Linear(input_size, hidden_size, bias=False)
-        self.gcn = GCNConv(hidden_size, hidden_size)
+        # self.gcn = GCNConv(hidden_size, hidden_size)
 
         self.out = nn.Linear(hidden_size * 3, output_size)
         self.sigmoid = nn.Sigmoid()
@@ -79,7 +79,7 @@ class Classifier(nn.Module):
         #         )
         #     , dim=1)
         # edge_weights = edge_weights.squeeze(0)
-        outputs = self.gcn(encoder_outputs, edge_index)
+        # outputs = self.gcn(encoder_outputs, edge_index)
         output = torch.cat((encoder_outputs[i], cause, effect))
         output = self.sigmoid(self.out(output))
         return output
