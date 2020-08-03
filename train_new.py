@@ -22,9 +22,9 @@ def makeOutputIndexes(lang, output, labels):
             sourceset[label] = lang.n_words + len(sourceset)
             id2source[sourceset[label]] = label
         pg_mat[sourceset[label]-lang.n_words][i] = 1
-    # indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
+    indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
     # indexes.reverse()
-    indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
+    # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
