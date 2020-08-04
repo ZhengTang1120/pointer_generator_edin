@@ -34,10 +34,11 @@ if __name__ == '__main__':
 
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    for epoch in range(20):
-        PATH = "model_cause_GCN/%d"%int(epoch)
-        encoder = torch.load(PATH+"/encoder")
-        classifier = torch.load(PATH+"/classifier")
-        decoder = torch.load(PATH+'/decoder')
+    # for epoch in range(20):
+    epoch = 5
+    PATH = "model_cause_GCN/%d"%int(epoch)
+    encoder = torch.load(PATH+"/encoder")
+    classifier = torch.load(PATH+"/classifier")
+    decoder = torch.load(PATH+'/decoder')
 
         print (eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang))
