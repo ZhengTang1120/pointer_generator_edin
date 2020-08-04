@@ -189,7 +189,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 candidates.append(decoded_rule)
                 references.append([rule])
 
-    return t, p, tp, tt, tc, corpus_bleu(references, candidates)
+    return tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
