@@ -6,6 +6,14 @@ from language import *
 import random
 from torch_geometric.nn import GCNConv
 
+SEED = 1234
+
+random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+
+device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, embedding_size, syn_size, hidden_size, pretrained):
@@ -13,12 +21,12 @@ class EncoderRNN(nn.Module):
 
         self.embedding = nn.Embedding.from_pretrained(pretrained, freeze=False)
         self.lemma_embedding = nn.Embedding(2, 5)
-        # self.syn_embedding = nn.Embedding(syn_size, hidden_size)
+        self.syn_embedding = nn.Embedding(syn_size, hidden_size)
         
         self.rnn = nn.LSTM(embedding_size + 5, hidden_size, bidirectional=True)
 
         self.linear  = nn.Linear(hidden_size * 2,   hidden_size)
-        # self.linear2 = nn.Linear(hidden_size + 610, hidden_size)
+        self.linear2 = nn.Linear(hidden_size + 610, hidden_size)
 
         self.attn = nn.Linear(hidden_size, 1)
 
@@ -30,11 +38,11 @@ class EncoderRNN(nn.Module):
         embedded = self.embedding(input).view(-1, 1, 300)
         embedded = torch.cat((embedded, lemma_embeded), dim=2)
         
-        # syn_embedded         = self.syn_embedding(syn_labels).view(syn_labels.size(0), -1)
-        # first_word_embedded  = embedded[edge_index[0],:,:].view(syn_labels.size(0), -1)
-        # second_word_embedded = embedded[edge_index[1],:,:].view(syn_labels.size(0), -1)
-        # syn_embedded         = torch.cat((syn_embedded, first_word_embedded, second_word_embedded), 1)
-        # syn_embedded         = self.linear2(syn_embedded)
+        syn_embedded         = self.syn_embedding(syn_labels).view(syn_labels.size(0), -1)
+        first_word_embedded  = embedded[edge_index[0],:,:].view(syn_labels.size(0), -1)
+        second_word_embedded = embedded[edge_index[1],:,:].view(syn_labels.size(0), -1)
+        syn_embedded         = torch.cat((syn_embedded, first_word_embedded, second_word_embedded), 1)
+        syn_embedded         = self.linear2(syn_embedded)
 
         output, hidden = self.rnn(embedded)
         output  = self.linear(output)
@@ -44,7 +52,7 @@ class EncoderRNN(nn.Module):
         effect_vec = outputs[effect_pos[0]:effect_pos[-1]+1]
         cause, cw = self.event_summary(cause_vec)
         effect, ew = self.event_summary(effect_vec)
-        return outputs, cause, effect, cw, ew#, syn_embedded
+        return outputs, cause, effect, cw, ew, syn_embedded
 
     def event_summary(self, event):
         attn_weights = F.softmax(torch.t(self.attn(event)), dim=1)
@@ -59,20 +67,20 @@ class Classifier(nn.Module):
         self.hidden_size = hidden_size
 
         self.attn = nn.Linear(input_size, hidden_size, bias=False)
-        # self.gcn = GCNConv(hidden_size, hidden_size)
+        self.gcn = GCNConv(hidden_size, hidden_size)
 
         self.out = nn.Linear(hidden_size * 3, output_size)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, i, encoder_outputs, cause, effect, edge_index):
-        # edge_weights = F.softmax(
-        #     torch.mm(
-        #         self.attn(encoder_outputs[i].view( 1,-1)), torch.t(syn_embeddeds)
-        #         )
-        #     , dim=1)
-        # edge_weights = edge_weights.squeeze(0)
-        # outputs = self.gcn(encoder_outputs, edge_index)
-        output = torch.cat((encoder_outputs[i], cause, effect))
+    def forward(self, i, encoder_outputs, syn_embeddeds, cause, effect, edge_index):
+        edge_weights = F.softmax(
+            torch.mm(
+                self.attn(encoder_outputs[i].view( 1,-1)), torch.t(syn_embeddeds)
+                )
+            , dim=1)
+        edge_weights = edge_weights.squeeze(0)
+        outputs = self.gcn(encoder_outputs, edge_index, edge_weights)
+        output = torch.cat((outputs[i], cause, effect))
         output = self.sigmoid(self.out(output))
         return output
 
@@ -86,7 +94,7 @@ class AttnDecoderRNN(nn.Module):
 
         self.embedding = nn.Embedding(self.output_size + 512, self.hidden_size)
         self.attn = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
-        # self.atten_gcn = GCNConv(hidden_size, hidden_size)
+        self.atten_gcn = GCNConv(hidden_size, hidden_size)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
         self.dropout = nn.Dropout(self.dropout_p)
         self.rnn = nn.LSTM(self.hidden_size, self.hidden_size)
@@ -98,36 +106,27 @@ class AttnDecoderRNN(nn.Module):
         self.ws = nn.Linear(self.hidden_size, 1, bias=False)
         self.wx = nn.Linear(self.hidden_size, 1)
 
-    def forward(self, input, hidden, encoder_outputs, edge_index, pg_mat):
+    def forward(self, input, hidden, encoder_outputs, syn_embeddeds, edge_index, pg_mat):
         embedded = self.embedding(input).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
         output, hidden = self.rnn(embedded, hidden)
 
-        # attn_weights = F.softmax(
-        #     torch.mm(
-        #         self.attn(hidden[0].view( 1,-1)), torch.t(syn_embeddeds)
-        #         )
-        #     , dim=1)
-        
-        # outputs = self.atten_gcn(encoder_outputs, edge_index, attn_weights.squeeze(0))
-
-        # attn_applied = outputs[0]
-
         attn_weights = F.softmax(
             torch.mm(
-                self.attn(hidden[0].view( 1,-1)), torch.t(encoder_outputs)
+                self.attn(hidden[0].view( 1,-1)), torch.t(syn_embeddeds)
                 )
             , dim=1)
-        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
-                                 encoder_outputs.unsqueeze(0))
+        
+        outputs = self.atten_gcn(encoder_outputs, edge_index, attn_weights.squeeze(0))
 
-        p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]+1e-7
+        attn_applied = outputs[0]
+
+        p_gen = torch.sigmoid(self.wh(attn_applied) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]+1e-7
 
         atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen+1e-7))
 
-        # output = torch.cat((hidden[0].view(1 ,-1), attn_applied.view(1, -1)), 1)
-        output = torch.cat((hidden[0].view( 1,-1), attn_applied[0]), 1)
+        output = torch.cat((hidden[0].view(1 ,-1), attn_applied.view(1, -1)), 1)
         
         output = self.attn_combine(output).unsqueeze(0)
 
