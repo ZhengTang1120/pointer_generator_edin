@@ -182,16 +182,16 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     decoder_input = topi.squeeze().detach()
 
             if len(rule) != 0:
-                print (decoded_rule)
-                print (rule)
-                print (sentence_bleu([rule], decoded_rule))
-                print ()
+                # print (decoded_rule)
+                # print (rule)
+                # print (sentence_bleu([rule], decoded_rule))
+                # print ()
                 candidates.append(decoded_rule)
                 references.append([rule])
     if p != 0:
-        return tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
     else:
-        return tp/t, 0, tt/tc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, 0, tt/tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
