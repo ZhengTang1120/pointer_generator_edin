@@ -198,12 +198,22 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('lr')
+    parser.add_argument('seed')
     args = parser.parse_args()
 
     input_lang = Lang("input")
     depen_lang = Lang("depen")
     rule_lang  = Lang("rule")
     trainning_set = list()
+
+    SEED = int(args.seed)
+
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
+    torch.backends.cudnn.deterministic = True
+
+    device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
 
     with open('train_GCN.json') as f:
         raw_train = json.load(f)
