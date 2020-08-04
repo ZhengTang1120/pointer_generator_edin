@@ -22,9 +22,9 @@ def makeOutputIndexes(lang, output, labels):
             sourceset[label] = lang.n_words + len(sourceset)
             id2source[sourceset[label]] = label
         pg_mat[sourceset[label]-lang.n_words][i] = 1
-    indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
+    # indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
     # indexes.reverse()
-    # indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
+    indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
@@ -278,14 +278,10 @@ if __name__ == '__main__':
         for datapoint in trainning_set:
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
 
-        os.mkdir("model_cause_ns/%d"%epoch)
-        PATH = "model_cause_ns/%d"%epoch
+        os.mkdir("model_cause_wo2/%d"%epoch)
+        PATH = "model_cause_wo2/%d"%epoch
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
 
         print (eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang))
-
-
-        
-        

@@ -92,7 +92,7 @@ class AttnDecoderRNN(nn.Module):
         self.output_size = output_size
         self.dropout_p = dropout_p
 
-        self.embedding = nn.Embedding(self.output_size + 512, self.hidden_size)
+        self.embedding = nn.Embedding(self.output_size, self.hidden_size)
         self.attn = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
         # self.atten_gcn = GCNConv(hidden_size, hidden_size)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
@@ -130,9 +130,9 @@ class AttnDecoderRNN(nn.Module):
         attn_applied = torch.bmm(attn_weights.unsqueeze(0),
                                  encoder_outputs.unsqueeze(0))
 
-        p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]+1e-7
+        # p_gen = torch.sigmoid(self.wh(attn_applied[0]) + self.ws(hidden[0].view( 1,-1)) + self.wx(embedded[0]))[0,0]+1e-7
 
-        atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen+1e-7))
+        # atten_p = torch.mm(attn_weights, pg_mat*(1-p_gen+1e-7))
 
         # output = torch.cat((hidden[0].view(1 ,-1), attn_applied.view(1, -1)), 1)
         output = torch.cat((hidden[0].view( 1,-1), attn_applied[0]), 1)
@@ -142,11 +142,11 @@ class AttnDecoderRNN(nn.Module):
         output = torch.tanh(output)
         
 
-        output = F.softmax(self.out(output[0]), dim=1)
-        # output = self.softmax(self.out(output[0]))
-        output = output * p_gen
-        output = torch.cat((output, atten_p),1)
-        output = torch.log(output)
+        # output = F.softmax(self.out(output[0]), dim=1)
+        output = self.softmax(self.out(output[0]))
+        # output = output * p_gen
+        # output = torch.cat((output, atten_p),1)
+        # output = torch.log(output)
 
         return output, hidden, attn_weights
 
