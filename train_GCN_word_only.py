@@ -1,4 +1,4 @@
-from model_GCN import *
+from model_GCN_word_only import *
 from utils import *
 import json
 import os
@@ -290,8 +290,8 @@ if __name__ == '__main__':
         for datapoint in trainning_set:
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
 
-        os.mkdir("model_cause_wo/%d"%epoch)
-        PATH = "model_cause_wo/%d"%epoch
+        os.mkdir("model_GCN_word_only_%d/%d"%(SEED, epoch))
+        PATH = "model_GCN_word_only_%d/%d"%(SEED, epoch)
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")

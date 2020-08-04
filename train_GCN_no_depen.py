@@ -1,4 +1,4 @@
-from model_GCN import *
+from model_GCN_no_depen import *
 from utils import *
 import json
 import os
@@ -22,9 +22,9 @@ def makeOutputIndexes(lang, output, labels):
             sourceset[label] = lang.n_words + len(sourceset)
             id2source[sourceset[label]] = label
         pg_mat[sourceset[label]-lang.n_words][i] = 1
-    indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
+    # indexes = [sourceset[token] if token in sourceset else lang.word2index[token] for token in output]
     # indexes.reverse()
-    # indexes2 = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
+    indexes = [lang.word2index[word] if word in lang.word2index else 0 for word in output]
     indexes.append(EOS_token)
     return indexes, pg_mat, id2source
 
@@ -188,6 +188,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 # print ()
                 candidates.append(decoded_rule)
                 references.append([rule])
+
     if p != 0:
         return tp, t, p, tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
     else:
@@ -290,8 +291,8 @@ if __name__ == '__main__':
         for datapoint in trainning_set:
             train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_optimizer, classifier_optimizer)
 
-        os.mkdir("model_cause_wo/%d"%epoch)
-        PATH = "model_cause_wo/%d"%epoch
+        os.mkdir("model_GCN_no_depen_%d/%d"%(SEED, epoch))
+        PATH = "model_GCN_no_depen_%d/%d"%(SEED, epoch)
         torch.save(encoder, PATH+"/encoder")
         torch.save(classifier, PATH+"/classifier")
         torch.save(decoder, PATH+"/decoder")
