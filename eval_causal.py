@@ -41,4 +41,4 @@ if __name__ == '__main__':
     classifier = torch.load(PATH+"/classifier")
     decoder = torch.load(PATH+'/decoder')
 
-        print (eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang))
+    print (eval(encoder, classifier, decoder, raw_dev, input_lang, depen_lang, rule_lang))
