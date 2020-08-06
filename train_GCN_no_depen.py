@@ -194,9 +194,9 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 references.append([rule])
 
     if p != 0:
-        return tp, t, p, tp/t, tp/p, tt/tc, cc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, tp/p, tt/tc, cc, tc, corpus_bleu(references, candidates)
     else:
-        return tp, t, p, tp/t, 0, tt/tc, cc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, 0, tt/tc, cc, tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
