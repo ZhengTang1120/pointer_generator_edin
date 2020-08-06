@@ -97,6 +97,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
     tp = 0.0
     tt = 0.0
     tc = 0.0
+    cc = 0.0
 
     references = []
     candidates = []
@@ -149,6 +150,8 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
             b_set = set(pred_trigger) 
             if len(trigger) != 0:
                 tc += 1
+            if len(pred_trigger)!=0:
+                cc += 1
             if len(a_set.intersection(b_set)) > 0: 
                 tt += 1 
             if pred_label == 1:
@@ -189,9 +192,9 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 candidates.append(decoded_rule)
                 references.append([rule])
     if p != 0:
-        return tp, t, p, tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, tp/p, tt/tc, cc, tc, corpus_bleu(references, candidates)
     else:
-        return tp, t, p, tp/t, 0, tt/tc, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, 0, tt/tc, cc, tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
