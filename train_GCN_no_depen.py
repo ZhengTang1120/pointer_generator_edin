@@ -145,10 +145,13 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                     if np.round(context).item() == 1:
                         pred_trigger.append(i)
 
+
             a_set = set(trigger) 
             b_set = set(pred_trigger) 
             if len(trigger) != 0:
                 tc += 1
+                print (trigger)
+                print (pred_trigger)
             if len(a_set.intersection(b_set)) > 0: 
                 tt += 1 
             if pred_label == 1:
