@@ -6,6 +6,8 @@ import argparse
 from nltk.translate.bleu_score import corpus_bleu, sentence_bleu
 from collections import defaultdict
 
+device = torch.device('cpu')
+
 def makeIndexes(lang, seq):
     indexes = [lang.word2index[word] if word in lang.word2index else 1 for word in seq]
     return indexes
