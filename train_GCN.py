@@ -112,7 +112,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
         edge_label = datapoint[8]
         gold       = datapoint[9]
 
-        if label == 1:
+        if gold and label == 1:
             t += 1
 
         input        = makeIndexes(input_lang, sent)
@@ -147,14 +147,15 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
 
             a_set = set(trigger) 
             b_set = set(pred_trigger) 
-            if len(trigger) != 0:
+            if gold and len(trigger) != 0:
                 tc += 1
-            if len(a_set.intersection(b_set)) > 0: 
+            if gold and len(a_set.intersection(b_set)) > 0: 
                 tt += 1 
             if pred_label == 1:
-                p += 1
-                if label == 1:
-                    tp += 1
+                if gold:
+                    p += 1
+                    if label == 1:
+                        tp += 1
 
                 if len(pred_trigger) != 0:
                     trigger_vec     = encoder_outputs[pred_trigger[0]:pred_trigger[-1]+1]

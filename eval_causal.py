@@ -1,6 +1,6 @@
-# from model_GCN_no_depen import *
+from model_GCN import *
 from utils import *
-from train_GCN_word_only import *
+from train_GCN import *
 import json
 
 if __name__ == '__main__':
@@ -10,9 +10,9 @@ if __name__ == '__main__':
     depen_lang = Lang("depen")
     trainning_set = list()
     
-    with open('train_GCN.json') as f:
+    with open('train_GCN2.json') as f:
         raw_train = json.load(f)
-    with open('dev_GCN.json') as f:
+    with open('dev_GCN2.json') as f:
         raw_dev = json.load(f)
 
     for datapoint in raw_train:
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    for epoch in range(10):
+    for epoch in range(3):
         PATH = "model_cause_wo/%d"%int(epoch)
         encoder = torch.load(PATH+"/encoder")
         classifier = torch.load(PATH+"/classifier")
