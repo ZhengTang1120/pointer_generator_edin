@@ -10,9 +10,9 @@ if __name__ == '__main__':
     depen_lang = Lang("depen")
     trainning_set = list()
     
-    with open('train_GCN.json') as f:
+    with open('train_GCN2.json') as f:
         raw_train = json.load(f)
-    with open('dev_GCN.json') as f:
+    with open('dev_GCN2.json') as f:
         raw_dev = json.load(f)
 
     for datapoint in raw_train:
