@@ -1,6 +1,6 @@
 from model_GCN import *
 from utils import *
-from train_new import *
+from train_GCN import *
 import json
 
 if __name__ == '__main__':
@@ -34,8 +34,8 @@ if __name__ == '__main__':
 
     # with open('test_x.json'%args.train, 'w') as f:
     #     f.write(json.dumps(raw_test))
-    for epoch in range(20):
-        PATH = "model_cause_GCN/%d"%int(epoch)
+    for epoch in range(4,5):
+        PATH = "model_GCN_4321/%d"%int(epoch)
         encoder = torch.load(PATH+"/encoder")
         classifier = torch.load(PATH+"/classifier")
         decoder = torch.load(PATH+'/decoder')
