@@ -93,9 +93,10 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
     decoder.eval()
 
     t = 0.0
-    p = 0.0
+    p  = 0.0
     tp = 0.0
     tt = 0.0
+    tc = 0.0
 
     references = []
     candidates = []
@@ -111,7 +112,7 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
         edge_label = datapoint[8]
         gold       = datapoint[9]
 
-        if label == 1:
+        if gold and label == 1:
             t += 1
 
         input        = makeIndexes(input_lang, sent)
@@ -189,9 +190,9 @@ def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
                 candidates.append(decoded_rule)
                 references.append([rule])
     if p != 0:
-        return tp, t, p, tp/t, tp/p, tt/198, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, tp/p, tt/tc, corpus_bleu(references, candidates)
     else:
-        return tp, t, p, tp/t, 0, tt/198, corpus_bleu(references, candidates)
+        return tp, t, p, tp/t, 0, tt/tc, corpus_bleu(references, candidates)
 
 
 if __name__ == '__main__':
