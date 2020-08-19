@@ -74,9 +74,9 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
 
         loss.backward()
 
-    clipping_value = 1#arbitrary number of your choosing
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
     if gold:
+        clipping_value = 1#arbitrary number of your choosing
+        torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
         torch.nn.utils.clip_grad_norm_(classifier.parameters(), clipping_value)
     # if len(rule_info)!=0:
     #     torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
