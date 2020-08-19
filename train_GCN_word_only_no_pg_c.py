@@ -81,11 +81,11 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
         # if len(rule_info)!=0:
         #     torch.nn.utils.clip_grad_norm_(decoder.parameters(), clipping_value)
 
-        encoder_optimizer.step()
-        classifier_optimizer.step()
-        # decoder_optimizer.step()
+            encoder_optimizer.step()
+            classifier_optimizer.step()
+            # decoder_optimizer.step()
 
-        return loss.item()
+            return loss.item()
 
 def eval(encoder, classifier, decoder, raw, input_lang, depen_lang, rule_lang):
     encoder.eval()
