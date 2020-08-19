@@ -218,7 +218,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(SEED)
     torch.backends.cudnn.deterministic = True
 
-    device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
 
     with open('train_GCN2.json') as f:
         raw_train = json.load(f)

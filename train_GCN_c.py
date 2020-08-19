@@ -72,7 +72,7 @@ def train(datapoint, encoder, decoder, classifier, encoder_optimizer, decoder_op
     #         loss += criterion2(decoder_output, rule_tensor[di])
     #         decoder_input = rule_tensor[di]
 
-    loss.backward()
+        loss.backward()
 
     clipping_value = 1#arbitrary number of your choosing
     torch.nn.utils.clip_grad_norm_(encoder.parameters(), clipping_value)
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed(SEED)
     torch.backends.cudnn.deterministic = True
 
-    device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
 
     with open('train_GCN2.json') as f:
         raw_train = json.load(f)

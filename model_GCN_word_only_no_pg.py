@@ -6,6 +6,8 @@ from language import *
 import random
 from torch_geometric.nn import GCNConv
 
+device = torch.device('cpu')#"cuda" if torch.cuda.is_available() else "cpu")
+
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, embedding_size, syn_size, hidden_size, pretrained):
         super(EncoderRNN, self).__init__()
